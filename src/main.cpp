@@ -61,16 +61,10 @@ int main()
 
         auto start = std::chrono::high_resolution_clock::now();
 
-        // SVO svo(6);
+        SVO svo(6);
 
-        // std::vector<float> noiseOutput(64 * 64);
-        // fnSimplex->GenUniformGrid2D(noiseOutput.data(), 0, 0, 256, 256, 0.2, 1337);
-
-        // for (auto& value : noiseOutput)
-        // {
-        //     std::cout << value << std::endl;
-		// }
-
+        std::vector<float> noiseOutput(64 * 64);
+        fnSimplex->GenUniformGrid2D(noiseOutput.data(), 0, 0, 64, 64, 0.2, 1337);
 
         auto finish = std::chrono::high_resolution_clock::now();
 
