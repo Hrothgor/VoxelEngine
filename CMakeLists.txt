@@ -2,6 +2,8 @@
 
 cmake_minimum_required(VERSION 3.20.0 FATAL_ERROR)
 
+set(CMAKE_CXX_STANDARD 20)
+
 project(voxel-engine VERSION 0.1.0 LANGUAGES CXX)
 
 # Add all Source Files
@@ -14,6 +16,9 @@ file(GLOB_RECURSE HEADER_FILES
 	${CMAKE_SOURCE_DIR}/src/*.h
 	${CMAKE_SOURCE_DIR}/src/*.hpp
 )
+
+# Add src/Include.hpp as -I
+include_directories(${CMAKE_SOURCE_DIR}/src)
 
 add_executable(${PROJECT_NAME} ${HEADER_FILES} ${SOURCE_FILES})
 

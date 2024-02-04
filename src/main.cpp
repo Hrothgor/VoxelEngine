@@ -1,23 +1,21 @@
-#include <iostream>
-#include <algorithm>
+#include "Include.hpp"
+
 #include <chrono>
 
-#include <glad/glad.h>
-#include <GLFW/glfw3.h>
-
-#include <FastNoise/FastNoise.h>
-#include "SVO.h"
+#include "InputManager.hpp"
+#include "SVO.hpp"
+#include "SimpleRenderer.hpp"
+#include "Camera.hpp"
 
 void ProcessInput(GLFWwindow* window)
 {
-    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
-        glfwSetWindowShouldClose(window, true);
+    InputManager::Get()->ProcessInput(window);
 }
 
 int main()
 {
     glfwInit();
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
@@ -36,6 +34,11 @@ int main()
         glViewport(0, 0, width, height);
     });
 
+    InputManager::Get()->Bind(GLFW_KEY_ESCAPE, GLFW_PRESS, InputManager::InputType::KEY, [](GLFWwindow* window)
+    {
+        glfwSetWindowShouldClose(window, true);
+    });
+
 	// glad: load all OpenGL function pointers
 	// ---------------------------------------
 	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
@@ -43,38 +46,47 @@ int main()
 		return -1;
 	}
 
-    auto fnSimplex = FastNoise::New<FastNoise::Value>();
+    // auto start = std::chrono::high_resolution_clock::now();
+    // {
+    //     int size = 64;
+    //     std::vector<float> noiseOutput(size * size);
+    //     auto fnSimplex = FastNoise::New<FastNoise::Value>();
+    //     fnSimplex->GenUniformGrid2D(noiseOutput.data(), 0, 0, size, size, 0.2, 1337);
+        
+    //     SVO svo(log(size) / log(2));
+    //     svo.Build(noiseOutput);
+    // }
+    // auto finish = std::chrono::high_resolution_clock::now();
+    // std::cout << std::chrono::duration_cast<std::chrono::duration<double, std::milli>>(finish - start).count() << "ms" << std::endl;
+
+    SimpleRenderer renderer;
+    Camera camera;
 
 	// render loop
 	// -----------
     while (!glfwWindowShouldClose(window))
     {
+        auto start = std::chrono::high_resolution_clock::now();
+   
         // input
 		// -----
         ProcessInput(window);
 
+        camera.Update(window);
+
 		// render
 		// ------
-        glClearColor(1.00f, 0.49f, 0.04f, 1.00f);
-        glClear(GL_COLOR_BUFFER_BIT);
-
-
-        auto start = std::chrono::high_resolution_clock::now();
-
-        SVO svo(6);
-
-        std::vector<float> noiseOutput(64 * 64);
-        fnSimplex->GenUniformGrid2D(noiseOutput.data(), 0, 0, 64, 64, 0.2, 1337);
-
-        auto finish = std::chrono::high_resolution_clock::now();
-
-        std::cout << std::chrono::duration_cast<std::chrono::duration<double, std::milli>>(finish - start).count() << "ms" << std::endl;
-
+        renderer.StartFrame();
+        renderer.DrawFullScreenTriangle(camera);
+        renderer.EndFrame();
 
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
 		// -------------------------------------------------------------------------------
         glfwSwapBuffers(window);
         glfwPollEvents();
+
+        auto finish = std::chrono::high_resolution_clock::now();
+        // std::cout << std::chrono::duration_cast<std::chrono::duration<double, std::milli>>(finish - start).count() << "ms" << std::endl;
     }
 
     glfwTerminate();
