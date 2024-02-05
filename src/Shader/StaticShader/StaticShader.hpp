@@ -13,22 +13,17 @@ class StaticShader : public ShaderProgram {
 
         void getAllUniformLocation();
 
-        void loadTransformationMatrix(const glm::mat4 &matrix);
-        void loadProjectionMatrix(const glm::mat4 &matrix);
-        void loadViewMatrix(const glm::mat4 &matrix);
-
         void loadTime(float time);
         void loadResolution(const glm::vec2 &resolution);
 
-        void loadCamera(const glm::vec3 &position, const glm::mat4 &rotation);
+        void loadCameraViewMatrix(const glm::mat4 &viewMatrix);
  
     protected:
     private:
         int loc_Time;
         int loc_Resolution;
 
-        int loc_cameraPosition;
-        int loc_cameraRotation;
+        int loc_cameraViewMatrix;
 };
 
 #endif /* !STATICSHADER_HPP_ */

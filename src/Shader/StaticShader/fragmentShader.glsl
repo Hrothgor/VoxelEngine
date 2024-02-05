@@ -60,19 +60,6 @@ vec3 CalculateNormals(vec3 hit, vec3 minBounds, vec3 maxBounds) {
 //     return (t / float(steps)) * normal;
 // }
 
-// Rotation matrices
-mat3 getRotationX(float angle) {
-    float c = cos(angle);
-    float s = sin(angle);
-    return mat3(1.0, 0.0, 0.0, 0.0, c, -s, 0.0, s, c);
-}
-
-mat3 getRotationY(float angle) {
-    float c = cos(angle);
-    float s = sin(angle);
-    return mat3(c, 0.0, s, 0.0, 1.0, 0.0, -s, 0.0, c);
-}
-
 void main()
 {
     vec2 fragCoord = uv * iResolution;

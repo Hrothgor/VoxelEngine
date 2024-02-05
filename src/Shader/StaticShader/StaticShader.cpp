@@ -21,23 +21,7 @@ void StaticShader::getAllUniformLocation()
     loc_Time = getUniformLocation("iTime");
     loc_Resolution = getUniformLocation("iResolution");
 
-    loc_cameraPosition = getUniformLocation("iCamPos");
-    loc_cameraRotation = getUniformLocation("iViewMatrix");
-}
-
-void StaticShader::loadTransformationMatrix(const glm::mat4 &matrix)
-{
-    // loadMatrix(loc_transformationMatrix, matrix);
-}
-
-void StaticShader::loadProjectionMatrix(const glm::mat4 &matrix)
-{
-    // loadMatrix(loc_projectionMatrix, matrix);
-}
-
-void StaticShader::loadViewMatrix(const glm::mat4 &matrix)
-{
-    // loadMatrix(loc_viewMatrix, matrix);
+    loc_cameraViewMatrix = getUniformLocation("iViewMatrix");
 }
 
 void StaticShader::loadTime(float time)
@@ -50,8 +34,7 @@ void StaticShader::loadResolution(const glm::vec2 &resolution)
     loadVector2(loc_Resolution, resolution);
 }
 
-void StaticShader::loadCamera(const glm::vec3 &position, const glm::mat4 &rotation)
+void StaticShader::loadCameraViewMatrix(const glm::mat4 &viewMatrix)
 {
-    loadVector3(loc_cameraPosition, position);
-    loadMatrix(loc_cameraRotation, rotation);
+    loadMatrix(loc_cameraViewMatrix, viewMatrix);
 }
