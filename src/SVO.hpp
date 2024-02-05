@@ -11,11 +11,8 @@ public:
     ~SVO();
 
     void Build(const std::vector<float>& heightMap);
-    void TempDisplay();
+    std::vector<int32_t> GetOctree() const;
 
-    struct Node {
-		int32_t data = 0;
-	};
 protected:
 private:
     void Build_Internal(const std::vector<float>& heightMap, uint16_t depth, uint16_t rootX, uint16_t rootY, uint16_t rootZ);
@@ -23,7 +20,7 @@ private:
 
     uint16_t _Depth;
     int32_t _Size;
-    std::vector<Node> _Octree;
+    std::vector<int32_t> _Octree;
 };
 
 

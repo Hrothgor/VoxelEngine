@@ -25,6 +25,7 @@ private:
 
     StaticShader _Shader;
     GLuint _EmptyVAO;
+    GLuint _SSBO;
 };
 
 

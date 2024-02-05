@@ -51,14 +51,14 @@ void SVO::Build_Internal(const std::vector<float>& heightMap, uint16_t depth, ui
 			
 	if (IsSame)
 	{
-		Node node;
-		node.data |= 1 << 31; // set the first bit to 1 to indicate that this node is a leaf
-		node.data |= FirstElement <= 0 ? 0 : 1; // set the second bit to 1 if the element is filled
+		uint32_t node;
+		node |= 1 << 31; // set the first bit to 1 to indicate that this node is a leaf
+		node |= FirstElement <= 0 ? 0 : 1; // set the second bit to 1 if the element is filled
 		_Octree.push_back(node);
 		return;
 	} else {
-		Node node;
-		node.data |= 0 << 31; // set the first bit to 0 to indicate that this node is not a leaf
+		uint32_t node;
+		node |= 0 << 31; // set the first bit to 0 to indicate that this node is not a leaf
 		_Octree.push_back(node);
 
 		Build_Internal(heightMap, depth + 1, rootX, rootY, rootZ);
@@ -73,12 +73,7 @@ void SVO::Build_Internal(const std::vector<float>& heightMap, uint16_t depth, ui
 	}
 }
 
-void SVO::TempDisplay()
+std::vector<int32_t> SVO::GetOctree() const
 {
-	TempDisplay_Internal();
-}
-
-void SVO::TempDisplay_Internal()
-{
- 
+	return (_Octree);
 }

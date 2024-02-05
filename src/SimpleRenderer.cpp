@@ -2,6 +2,7 @@
 #define _USE_MATH_DEFINES
 #include <math.h>
 #include <chrono>
+#include "SVO.hpp"
 
 #define WIDTH 800.0
 #define HEIGHT 600.0
@@ -12,6 +13,26 @@
 SimpleRenderer::SimpleRenderer()
 {
     glGenVertexArrays(1, &_EmptyVAO);
+
+    auto start = std::chrono::high_resolution_clock::now();
+    {
+        int size = 64;
+        std::vector<float> noiseOutput(size * size);
+        auto fnSimplex = FastNoise::New<FastNoise::Value>();
+        fnSimplex->GenUniformGrid2D(noiseOutput.data(), 0, 0, size, size, 0.2, 1337);
+        
+        SVO svo(log(size) / log(2));
+        svo.Build(noiseOutput);
+
+        // Create buffer
+        glGenBuffers(1, &_SSBO);
+        glBindBuffer(GL_SHADER_STORAGE_BUFFER, _SSBO);
+        glBufferData(GL_SHADER_STORAGE_BUFFER, svo.GetOctree().size() * sizeof(int), svo.GetOctree().data(), GL_STATIC_READ);
+        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, _SSBO);
+        glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+    }
+    auto finish = std::chrono::high_resolution_clock::now();
+    std::cout << std::chrono::duration_cast<std::chrono::duration<double, std::milli>>(finish - start).count() << "ms" << std::endl;
 }
 
 SimpleRenderer::~SimpleRenderer()
@@ -43,8 +64,11 @@ void SimpleRenderer::DrawFullScreenTriangle(const Camera &camera)
     _Shader.loadCameraViewMatrix(camera.GetViewMatrix());
 
     glBindVertexArray(_EmptyVAO);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, _SSBO);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, _SSBO);
     glDrawArrays(GL_TRIANGLES, 0, 3);
     glBindVertexArray(0);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 
     _Shader.stop();
 }

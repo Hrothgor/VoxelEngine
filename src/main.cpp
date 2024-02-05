@@ -3,7 +3,6 @@
 #include <chrono>
 
 #include "InputManager.hpp"
-#include "SVO.hpp"
 #include "SimpleRenderer.hpp"
 #include "Camera.hpp"
 
@@ -46,19 +45,6 @@ int main()
 		return -1;
 	}
 
-    // auto start = std::chrono::high_resolution_clock::now();
-    // {
-    //     int size = 64;
-    //     std::vector<float> noiseOutput(size * size);
-    //     auto fnSimplex = FastNoise::New<FastNoise::Value>();
-    //     fnSimplex->GenUniformGrid2D(noiseOutput.data(), 0, 0, size, size, 0.2, 1337);
-        
-    //     SVO svo(log(size) / log(2));
-    //     svo.Build(noiseOutput);
-    // }
-    // auto finish = std::chrono::high_resolution_clock::now();
-    // std::cout << std::chrono::duration_cast<std::chrono::duration<double, std::milli>>(finish - start).count() << "ms" << std::endl;
-
     SimpleRenderer renderer;
     Camera camera;
 
@@ -86,7 +72,7 @@ int main()
         glfwPollEvents();
 
         auto finish = std::chrono::high_resolution_clock::now();
-        // std::cout << std::chrono::duration_cast<std::chrono::duration<double, std::milli>>(finish - start).count() << "ms" << std::endl;
+        std::cout << std::chrono::duration_cast<std::chrono::duration<double, std::milli>>(finish - start).count() << "ms" << std::endl;
     }
 
     glfwTerminate();
