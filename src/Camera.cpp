@@ -5,6 +5,8 @@
 
 Camera::Camera()
 {
+    UpdateViewMatrix();
+
     InputManager::Get()->Bind(GLFW_KEY_W, GLFW_PRESS, InputManager::InputType::KEY, [this](GLFWwindow *window) {
         _position += _moveSpeed * GetForward();
     });
