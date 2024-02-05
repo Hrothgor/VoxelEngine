@@ -20,7 +20,7 @@ class StaticShader : public ShaderProgram {
         void loadTime(float time);
         void loadResolution(const glm::vec2 &resolution);
 
-        void loadCamera(const glm::vec3 &position, const glm::vec3 &rotation);
+        void loadCamera(const glm::vec3 &position, const glm::mat4 &rotation);
  
     protected:
     private:

@@ -22,7 +22,7 @@ void StaticShader::getAllUniformLocation()
     loc_Resolution = getUniformLocation("iResolution");
 
     loc_cameraPosition = getUniformLocation("iCamPos");
-    loc_cameraRotation = getUniformLocation("iCamForward");
+    loc_cameraRotation = getUniformLocation("iViewMatrix");
 }
 
 void StaticShader::loadTransformationMatrix(const glm::mat4 &matrix)
@@ -50,8 +50,8 @@ void StaticShader::loadResolution(const glm::vec2 &resolution)
     loadVector2(loc_Resolution, resolution);
 }
 
-void StaticShader::loadCamera(const glm::vec3 &position, const glm::vec3 &rotation)
+void StaticShader::loadCamera(const glm::vec3 &position, const glm::mat4 &rotation)
 {
     loadVector3(loc_cameraPosition, position);
-    loadVector3(loc_cameraRotation, rotation);
+    loadMatrix(loc_cameraRotation, rotation);
 }

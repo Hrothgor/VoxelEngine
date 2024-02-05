@@ -11,12 +11,15 @@ class Camera {
         ~Camera();
 
         void Update(GLFWwindow *window);
+        void UpdateViewMatrix();
 
         glm::vec3 GetPosition() const;
         glm::vec3 GetRotation() const;
         float GetPitch() const;
         float GetYaw() const;
         float GetRoll() const;
+
+        glm::mat4 GetViewMatrix() const;
 
         glm::vec3 GetForward() const;
         glm::vec3 GetRight() const;
@@ -25,6 +28,7 @@ class Camera {
     private:
         glm::vec3 _position = {.0f, .0f ,.0f};
         glm::vec3 _rotation = {.0f, .0f, .0f}; //pitch yaw roll
+        glm::mat4 _viewMatrix;
 
         float _moveSpeed = 0.2f;
         float _rotationSpeed = 0.1f;
