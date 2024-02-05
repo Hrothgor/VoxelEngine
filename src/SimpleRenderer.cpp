@@ -40,7 +40,7 @@ void SimpleRenderer::DrawFullScreenTriangle(const Camera &camera)
     glGetIntegerv(GL_VIEWPORT, ViewportSize);
     _Shader.loadResolution(glm::vec2(ViewportSize[2], ViewportSize[3]));
 
-    _Shader.loadCamera(camera.GetPosition(), camera.GetViewMatrix());
+    _Shader.loadCameraViewMatrix(camera.GetViewMatrix());
 
     glBindVertexArray(_EmptyVAO);
     glDrawArrays(GL_TRIANGLES, 0, 3);
