@@ -58,10 +58,11 @@ void Camera::Update(GLFWwindow *window)
         _rotation.x -= MouseOffset.y * _rotationSpeed;
         _rotation.x = glm::clamp(_rotation.x, -80.0f, 80.0f);
 
-        UpdateViewMatrix();
 
         glfwSetCursorPos(window, _mousePos.x, _mousePos.y);
     }
+
+    UpdateViewMatrix();
 }
 
 void Camera::UpdateViewMatrix()

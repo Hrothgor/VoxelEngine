@@ -35,7 +35,7 @@ bool intersectRayAABB(Ray ray, vec3 minBounds, vec3 maxBounds, out float tMin, o
     tMin = max(max(tMinVec.x, tMinVec.y), tMinVec.z);
     tMax = min(min(tMaxVec.x, tMaxVec.y), tMaxVec.z);
 
-    return tMin <= tMax;
+    return tMin <= tMax && tMax > 0.0;
 }
 
 vec3 CalculateNormals(vec3 hit, vec3 minBounds, vec3 maxBounds) {
@@ -122,7 +122,9 @@ void main()
 	Ray cameraRay = Ray(camPos, camDir);
 
 	//final color
-	out_Pixel = vec4(TraverseOctree(cameraRay), 1.0);
+    vec3 color = TraverseOctree(cameraRay);
+	out_Pixel = vec4(color, 1.0);
+
 }
 
 
