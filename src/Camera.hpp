@@ -26,15 +26,15 @@ class Camera {
 
     protected:
     private:
-        glm::vec3 _position = {.0f, .0f ,.0f};
-        glm::vec3 _rotation = {.0f, .0f, .0f}; //pitch yaw roll
+        glm::vec3 _position = {-10.0f, -5.0f ,-10.0f};
+        glm::vec3 _rotation = {10.0f, -30.0f, .0f}; //pitch yaw roll
         glm::mat4 _viewMatrix;
 
         float _moveSpeed = 0.2f;
         float _rotationSpeed = 0.1f;
 
-        glm::vec2 _mousePos;
         bool _mouseClicked;
+        glm::vec<2, double> _mousePos;
 };
 
 #endif /* !CAMERA_HPP_ */

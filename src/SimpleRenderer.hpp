@@ -19,10 +19,6 @@ public:
     void DrawFullScreenTriangle(const Camera &camera);
 
 private:
-    glm::mat4 createTransformationMatrix(glm::vec3 translation, glm::vec3 rotation, float scale);
-    glm::mat4 createProjectionMatrix();
-    glm::mat4 createViewMatrix(glm::vec3 pos, float pitch, float yaw, float roll);
-
     StaticShader _Shader;
     GLuint _EmptyVAO;
     GLuint _SSBO;

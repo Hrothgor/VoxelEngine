@@ -56,8 +56,8 @@ void SimpleRenderer::DrawFullScreenTriangle(const Camera &camera)
     _Shader.start();
 
     _Shader.loadTime(glfwGetTime());
-    GLint ViewportSize[4];
 
+    GLint ViewportSize[4];
     glGetIntegerv(GL_VIEWPORT, ViewportSize);
     _Shader.loadResolution(glm::vec2(ViewportSize[2], ViewportSize[3]));
 

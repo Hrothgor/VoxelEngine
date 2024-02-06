@@ -30,16 +30,14 @@ Camera::Camera()
         if (_mouseClicked == true)
             return;
 
-        // glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
+        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
+        glfwGetCursorPos(window, &_mousePos.x, &_mousePos.y);
 
-        double xpos, ypos;
-        glfwGetCursorPos(window, &xpos, &ypos);
-        _mousePos = glm::vec2(xpos, ypos);
         _mouseClicked = true;
     });
     InputManager::Get()->Bind(GLFW_MOUSE_BUTTON_LEFT, GLFW_RELEASE, InputManager::InputType::MOUSE, [this](GLFWwindow *window) {
+        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
         _mouseClicked = false;
-        // glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
     });
 }
 
@@ -52,15 +50,17 @@ void Camera::Update(GLFWwindow *window)
     if (_mouseClicked == true) {
         double xpos, ypos;
         glfwGetCursorPos(window, &xpos, &ypos);
-        _rotation.y -= (xpos - _mousePos.x) * _rotationSpeed;
+        glm::vec2 MouseOffset = {xpos - _mousePos.x, ypos - _mousePos.y};
+
+        _rotation.y -= MouseOffset.x * _rotationSpeed;
         _rotation.y = fmod(_rotation.y, 360.0f);
 
-        _rotation.x -= (ypos - _mousePos.y) * _rotationSpeed;
+        _rotation.x -= MouseOffset.y * _rotationSpeed;
         _rotation.x = glm::clamp(_rotation.x, -80.0f, 80.0f);
 
         UpdateViewMatrix();
 
-        _mousePos = glm::vec2(xpos, ypos);
+        glfwSetCursorPos(window, _mousePos.x, _mousePos.y);
     }
 }
 
