@@ -50,7 +50,7 @@ int SVO::Build_Internal(const std::vector<float>& heightMap, uint16_t depth, uin
 		}
 	}
 			
-	if (IsSame || depth == _Depth)
+	if (IsSame)
 	{
 		Node node;
 		node.data |= FirstElement <= 0 ? 0 : 1; // set the first bit to 1 if the element is filled

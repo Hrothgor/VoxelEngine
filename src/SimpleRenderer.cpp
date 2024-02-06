@@ -24,10 +24,26 @@ SimpleRenderer::SimpleRenderer()
         SVO svo(log(size) / log(2));
         svo.Build(noiseOutput);
 
+        // Test octrre with bottom filled and one top filled
+        std::vector<SVO::Node> octree;
+        // full octree
+        octree.push_back({0, {1, 2, 3, 4, 5, 6, 7, 8}});
+
+        octree.push_back({2147483649, {0, 0, 0, 0, 0, 0, 0, 0}});
+        octree.push_back({2147483649, {0, 0, 0, 0, 0, 0, 0, 0}});
+        octree.push_back({2147483649, {0, 0, 0, 0, 0, 0, 0, 0}});
+        octree.push_back({2147483649, {0, 0, 0, 0, 0, 0, 0, 0}});
+
+        octree.push_back({2147483648, {0, 0, 0, 0, 0, 0, 0, 0}});
+        octree.push_back({2147483648, {0, 0, 0, 0, 0, 0, 0, 0}});
+        octree.push_back({2147483648, {0, 0, 0, 0, 0, 0, 0, 0}});
+        octree.push_back({2147483649, {0, 0, 0, 0, 0, 0, 0, 0}});
+
+
         // Create buffer
         glGenBuffers(1, &_SSBO);
         glBindBuffer(GL_SHADER_STORAGE_BUFFER, _SSBO);
-        glBufferData(GL_SHADER_STORAGE_BUFFER, svo.GetOctree().size() * sizeof(SVO::Node), svo.GetOctree().data(), GL_STATIC_READ);
+        glBufferData(GL_SHADER_STORAGE_BUFFER, octree.size() * sizeof(SVO::Node), octree.data(), GL_STATIC_READ);
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, _SSBO);
         glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
     }
