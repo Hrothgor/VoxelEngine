@@ -25,7 +25,8 @@ void SVO::Build(const std::vector<float>& heightMap)
 }
 
 // heightMap is a 2D array of size _Size * _Size
-void SVO::Build_Internal(const std::vector<float>& heightMap, uint16_t depth, uint16_t rootX, uint16_t rootY, uint16_t rootZ)
+// retrun the index of the added node
+int SVO::Build_Internal(const std::vector<float>& heightMap, uint16_t depth, uint16_t rootX, uint16_t rootY, uint16_t rootZ)
 {
 	float MySize = _Size / (1 << depth);
 
@@ -49,31 +50,34 @@ void SVO::Build_Internal(const std::vector<float>& heightMap, uint16_t depth, ui
 		}
 	}
 			
-	if (IsSame)
+	if (IsSame || depth == _Depth)
 	{
-		uint32_t node;
-		node |= 1 << 31; // set the first bit to 1 to indicate that this node is a leaf
-		node |= FirstElement <= 0 ? 0 : 1; // set the second bit to 1 if the element is filled
+		Node node;
+		node.data |= FirstElement <= 0 ? 0 : 1; // set the first bit to 1 if the element is filled
+		node.data |= 1 << 31; // set the last bit to 1 to indicate that this node is a leaf
+
 		_Octree.push_back(node);
-		return;
+		return (_Octree.size() - 1);
 	} else {
-		uint32_t node;
-		node |= 0 << 31; // set the first bit to 0 to indicate that this node is not a leaf
+		Node node;
+		node.data = 0;
+
+		node.children[0] = Build_Internal(heightMap, depth + 1, rootX, rootY, rootZ);
+		node.children[1] = Build_Internal(heightMap, depth + 1, rootX + MySize / 2, rootY, rootZ);
+		node.children[2] = Build_Internal(heightMap, depth + 1, rootX, rootY + MySize / 2, rootZ);
+		node.children[3] = Build_Internal(heightMap, depth + 1, rootX + MySize / 2, rootY + MySize / 2, rootZ);
+
+		node.children[4] = Build_Internal(heightMap, depth + 1, rootX, rootY, rootZ + MySize / 2);
+		node.children[5] = Build_Internal(heightMap, depth + 1, rootX + MySize / 2, rootY, rootZ + MySize / 2);
+		node.children[6] = Build_Internal(heightMap, depth + 1, rootX, rootY + MySize / 2, rootZ + MySize / 2);
+		node.children[7] = Build_Internal(heightMap, depth + 1, rootX + MySize / 2, rootY + MySize / 2, rootZ + MySize / 2);
+
 		_Octree.push_back(node);
-
-		Build_Internal(heightMap, depth + 1, rootX, rootY, rootZ);
-		Build_Internal(heightMap, depth + 1, rootX + MySize / 2, rootY, rootZ);
-		Build_Internal(heightMap, depth + 1, rootX, rootY + MySize / 2, rootZ);
-		Build_Internal(heightMap, depth + 1, rootX + MySize / 2, rootY + MySize / 2, rootZ);
-
-		Build_Internal(heightMap, depth + 1, rootX, rootY, rootZ + MySize / 2);
-		Build_Internal(heightMap, depth + 1, rootX + MySize / 2, rootY, rootZ + MySize / 2);
-		Build_Internal(heightMap, depth + 1, rootX, rootY + MySize / 2, rootZ + MySize / 2);
-		Build_Internal(heightMap, depth + 1, rootX + MySize / 2, rootY + MySize / 2, rootZ + MySize / 2);
+		return (_Octree.size() - 1);
 	}
 }
 
-std::vector<int32_t> SVO::GetOctree() const
+std::vector<SVO::Node> SVO::GetOctree() const
 {
 	return (_Octree);
 }

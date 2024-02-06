@@ -5,19 +5,23 @@ in vec2 uv;
 uniform float iTime;
 uniform vec2 iResolution;
 
-// camera
 uniform mat4 iViewMatrix;
 
-layout(std430, binding = 3) readonly buffer SSBO
-{
-    uint SVO[];
-};
-
 out vec4 out_Pixel;
+
+struct Node {
+    int data;
+    int children[8];
+};
 
 struct Ray {
     vec3 origin;
     vec3 direction;
+};
+
+layout(std430, binding = 0) readonly buffer SSBO
+{
+    Node SVO[];
 };
 
 bool intersectRayAABB(Ray ray, vec3 minBounds, vec3 maxBounds, out float tMin, out float tMax) {
@@ -49,70 +53,53 @@ struct NodeInfo {
 // Traverse my SVO and find the closest intersection
 vec3 TraverseOctree(Ray ray)
 {
+    vec3 color = vec3(0.0);
+
     int stackIndex = 0;
     stack[stackIndex++] = NodeInfo(0, vec3(0.0), 0);
 
+    float closestHit = 1000000.0;
+    NodeInfo closestNodeInfo = NodeInfo(-1, vec3(0.0), 0);
     
-    while (stackIndex >= 0)
+    while (stackIndex > 0)
     {
-        NodeInfo current = stack[--stackIndex];
-        float tMin, tMax;
-        vec3 minBounds = vec3(current.root);
-        vec3 maxBounds = vec3(64.0);
-        if (intersectRayAABB(ray, minBounds, maxBounds, tMin, tMax))
-            return abs(CalculateNormals(ray.origin + ray.direction * tMin, minBounds, maxBounds));
-        else 
-            return vec3(0.0);
+        NodeInfo currentInfo = stack[--stackIndex];
 
-        stackIndex--;
+        float mySize = 8.0 / (1 << currentInfo.depth);
+        // Calculate my bounds from depth and root
+        vec3 minBounds = currentInfo.root;
+        vec3 maxBounds = currentInfo.root + vec3(mySize);
+
+        float tMin, tMax;
+        if (!intersectRayAABB(ray, minBounds, maxBounds, tMin, tMax))
+            continue;
+
+        color += vec3(0.1);
+
+        Node currentNode = SVO[currentInfo.index];
+        if ((currentNode.data & (1 << 31)) == 0)
+        {
+            stack[stackIndex++] = NodeInfo(currentNode.children[0], currentInfo.root, currentInfo.depth + 1);
+            // stack[stackIndex++] = NodeInfo(currentNode.children[1], vec3(currentInfo.root.x + mySize / 2.0, currentInfo.root.y, currentInfo.root.z), currentInfo.depth + 1);
+            // stack[stackIndex++] = NodeInfo(currentNode.children[2], vec3(currentInfo.root.x, currentInfo.root.y + mySize / 2.0, currentInfo.root.z), currentInfo.depth + 1);
+            // stack[stackIndex++] = NodeInfo(currentNode.children[3], vec3(currentInfo.root.x + mySize / 2.0, currentInfo.root.y + mySize / 2.0, currentInfo.root.z), currentInfo.depth + 1);
+
+            // stack[stackIndex++] = NodeInfo(currentNode.children[4], vec3(currentInfo.root.x, currentInfo.root.y, currentInfo.root.z + mySize / 2.0), currentInfo.depth + 1);
+            // stack[stackIndex++] = NodeInfo(currentNode.children[5], vec3(currentInfo.root.x + mySize / 2.0, currentInfo.root.y, currentInfo.root.z + mySize / 2.0), currentInfo.depth + 1);
+            // stack[stackIndex++] = NodeInfo(currentNode.children[6], vec3(currentInfo.root.x, currentInfo.root.y + mySize / 2.0, currentInfo.root.z + mySize / 2.0), currentInfo.depth + 1);
+            // stack[stackIndex++] = NodeInfo(currentNode.children[7], vec3(currentInfo.root.x + mySize / 2.0, currentInfo.root.y + mySize / 2.0, currentInfo.root.z + mySize / 2.0), currentInfo.depth + 1);
+        } else {
+            if (tMin < closestHit) {
+                closestHit = tMin;
+                closestNodeInfo = currentInfo;
+            }
+        }
     }
 
-
-
-    // while (stackIndex >= 0)
-    // {
-    //     NodeInfo current = stack[stackIndex--];
-
-    //     float mySize = 64.0 / (1 << current.depth);
-    //     // Calculate my bounds from depth and root
-    //     vec3 minBounds = current.root;
-    //     vec3 maxBounds = current.root + vec3(mySize);
-
-    //     float tMin, tMax;
-    //     if (!intersectRayAABB(ray, minBounds, maxBounds, tMin, tMax))
-    //         continue;
-        
-    //     // Traverse the octree, if a node is a 0 it means it's a branch and the next 8 nodes are the children
-    //     // for (int i = 0; i < 1; i++)
-    //     // {
-    //         uint node = SVO[current.index];
-    //         bool isBranch = (node & (1 << 31)) == 0;
-    //         if (isBranch)
-    //         {
-    //             if (intersectRayAABB(ray, minBounds, maxBounds, tMin, tMax))
-    //                 return abs(CalculateNormals(ray.origin + ray.direction * tMin, minBounds, maxBounds));
-    //             // Traverse all 8 children
-    //             // stack[stackIndex++] = NodeInfo(current.index + 1, current.root, current.depth + 1);
-    //             // stack[stackIndex++] = NodeInfo(current.index + 1, vec3(current.root.x + mySize / 2.0, current.root.y, current.root.z), current.depth + 1);
-    //             // stack[stackIndex++] = NodeInfo(current.index + 1, vec3(current.root.x, current.root.y + mySize / 2.0, current.root.z), current.depth + 1);
-    //             // stack[stackIndex++] = NodeInfo(current.index + 1, vec3(current.root.x + mySize / 2.0, current.root.y + mySize / 2.0, current.root.z), current.depth + 1);
-
-    //             // stack[stackIndex++] = NodeInfo(current.index + 1, vec3(current.root.x, current.root.y, current.root.z + mySize / 2.0), current.depth + 1);
-    //             // stack[stackIndex++] = NodeInfo(current.index + 1, vec3(current.root.x + mySize / 2.0, current.root.y, current.root.z + mySize / 2.0), current.depth + 1);
-    //             // stack[stackIndex++] = NodeInfo(current.index + 1, vec3(current.root.x, current.root.y + mySize / 2.0, current.root.z + mySize / 2.0), current.depth + 1);
-    //             // stack[stackIndex++] = NodeInfo(current.index + 1, vec3(current.root.x + mySize / 2.0, current.root.y + mySize / 2.0, current.root.z + mySize / 2.0), current.depth + 1);
-    //         }
-    //         // Check if first byte is 1, if so it's a leaf node
-    //         else if ((node & 1) == 1)
-    //         {
-    //             // Leaf node, check for intersection
-    //             if (intersectRayAABB(ray, minBounds, maxBounds, tMin, tMax))
-    //                 return abs(CalculateNormals(ray.origin + ray.direction * tMin, minBounds, maxBounds));
-    //         }
-    //     // }
-    // }
-
-    // return vec3(0.0);
+    if (closestNodeInfo.index != -1 && (SVO[closestNodeInfo.index].data & 1) == 0)
+        return abs(CalculateNormals(ray.origin + ray.direction * closestHit, closestNodeInfo.root, closestNodeInfo.root + vec3(8.0 / (1 << closestNodeInfo.depth))));
+    else 
+        return color;
 }
 
 void main()
