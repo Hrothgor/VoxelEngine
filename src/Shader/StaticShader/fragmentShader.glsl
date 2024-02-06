@@ -135,7 +135,16 @@ void main()
 	Ray cameraRay = Ray(camPos, camDir);
 
 	//final color
-	out_Pixel = vec4(TraverseOctree(cameraRay), 1.0);
+    float tMin, tMax;
+    vec3 minBounds = vec3(0.0);
+    vec3 maxBounds = vec3(64.0);
+    vec3 color;
+    if (intersectRayAABB(cameraRay, minBounds, maxBounds, tMin, tMax))
+        color = abs(CalculateNormals(cameraRay.origin + cameraRay.direction * tMin, minBounds, maxBounds));
+    else 
+        color = vec3(0.0);
+	out_Pixel = vec4(color, 1.0);
+	// out_Pixel = vec4(TraverseOctree(cameraRay), 1.0);
 }
 
 
