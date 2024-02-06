@@ -17,9 +17,9 @@ SimpleRenderer::SimpleRenderer()
     auto start = std::chrono::high_resolution_clock::now();
     {
         int size = 8;
-        std::vector<float> noiseOutput(size * size);
+        std::vector<float> noiseOutput(size * size * size);
         auto fnSimplex = FastNoise::New<FastNoise::Value>();
-        fnSimplex->GenUniformGrid2D(noiseOutput.data(), 0, 0, size, size, 0.2, 1337);
+        fnSimplex->GenUniformGrid3D(noiseOutput.data(), 0, 0, 0, size, size, size, 0.2, 1337);
         
         SVO svo(log(size) / log(2));
         svo.Build(noiseOutput);
@@ -43,7 +43,7 @@ SimpleRenderer::SimpleRenderer()
         // Create buffer
         glGenBuffers(1, &_SSBO);
         glBindBuffer(GL_SHADER_STORAGE_BUFFER, _SSBO);
-        glBufferData(GL_SHADER_STORAGE_BUFFER, octree.size() * sizeof(SVO::Node), octree.data(), GL_STATIC_READ);
+        glBufferData(GL_SHADER_STORAGE_BUFFER, svo.GetOctree().size() * sizeof(SVO::Node), svo.GetOctree().data(), GL_STATIC_READ);
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, _SSBO);
         glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
     }

@@ -96,7 +96,7 @@ vec3 TraverseOctree(Ray ray)
         }
     }
 
-    if (closestNodeInfo.index != -1 && (SVO[closestNodeInfo.index].data & 1) != 0)
+    if (closestNodeInfo.index != -1)
         return abs(CalculateNormals(ray.origin + ray.direction * closestHit, closestNodeInfo.root, closestNodeInfo.root + vec3(8.0 / (1 << closestNodeInfo.depth))));
     else 
         return color;

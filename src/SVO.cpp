@@ -33,14 +33,14 @@ int SVO::Build_Internal(const std::vector<float>& heightMap, uint16_t depth, uin
 	//check if this cube is full of same element in the heightmap
 	bool IsSame = true;
 
-	int FirstElement = ((heightMap[rootX + rootY * MySize] + 1) / 2) * (_Size / 2) + (_Size / 4) >= rootZ ? 1 : 0;
+	int FirstElement = heightMap[rootX + rootY * MySize + rootZ * MySize * MySize] >= 0.0 ? 1 : 0;
 	for (uint16_t x = rootX; x < rootX + MySize; x++)
 	{
 		for (uint16_t y = rootY; y < rootY + MySize; y++)
 		{
 			for (uint16_t z = rootZ; z < rootZ + MySize; z++)
 			{
-				int ActualElement = ((heightMap[x + y * MySize] + 1) / 2) * (_Size / 2) + (_Size / 4) >= z ? 1 : 0;
+				int ActualElement = heightMap[x + y * MySize + z * MySize * MySize] >= 0.0 ? 1 : 0;
 				if (ActualElement != FirstElement)
 				{
 					IsSame = false;
@@ -49,11 +49,28 @@ int SVO::Build_Internal(const std::vector<float>& heightMap, uint16_t depth, uin
 			}
 		}
 	}
+
+	// int FirstElement = ((heightMap[rootX + rootY * MySize] + 1) / 2) * (_Size / 2) + (_Size / 4) >= rootZ ? 1 : 0;
+	// for (uint16_t x = rootX; x < rootX + MySize; x++)
+	// {
+	// 	for (uint16_t y = rootY; y < rootY + MySize; y++)
+	// 	{
+	// 		for (uint16_t z = rootZ; z < rootZ + MySize; z++)
+	// 		{
+	// 			int ActualElement = ((heightMap[x + y * MySize] + 1) / 2) * (_Size / 2) + (_Size / 4) >= z ? 1 : 0;
+	// 			if (ActualElement != FirstElement)
+	// 			{
+	// 				IsSame = false;
+	// 				break;
+	// 			}
+	// 		}
+	// 	}
+	// }
 			
 	if (IsSame)
 	{
 		Node node;
-		node.data |= FirstElement <= 0 ? 0 : 1; // set the first bit to 1 if the element is filled
+		node.data |= FirstElement; // set the first bit to 1 if the element is filled
 		node.data |= 1 << 31; // set the last bit to 1 to indicate that this node is a leaf
 
 		_Octree.push_back(node);
