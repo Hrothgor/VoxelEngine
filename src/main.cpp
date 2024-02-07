@@ -28,6 +28,7 @@ int main()
         return -1;
     }
     glfwMakeContextCurrent(window);
+    glfwSwapInterval(0);
     glfwSetFramebufferSizeCallback(window, [](GLFWwindow* window, int width, int height)
     {
         glViewport(0, 0, width, height);
