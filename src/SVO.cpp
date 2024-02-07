@@ -33,31 +33,14 @@ int SVO::Build_Internal(const std::vector<float>& heightMap, uint16_t depth, uin
 	//check if this cube is full of same element in the heightmap
 	bool IsSame = true;
 
-	// int FirstElement = heightMap[rootX + rootY * MySize + rootZ * MySize * MySize] >= 0.0 ? 1 : 0;
-	// for (uint16_t x = rootX; x < rootX + MySize; x++)
-	// {
-	// 	for (uint16_t y = rootY; y < rootY + MySize; y++)
-	// 	{
-	// 		for (uint16_t z = rootZ; z < rootZ + MySize; z++)
-	// 		{
-	// 			int ActualElement = heightMap[x + y * MySize + z * MySize * MySize] >= 0.0 ? 1 : 0;
-	// 			if (ActualElement != FirstElement)
-	// 			{
-	// 				IsSame = false;
-	// 				break;
-	// 			}
-	// 		}
-	// 	}
-	// }
-
-	int FirstElement = ((heightMap[rootX + rootZ * MySize] + 1) / 2) * (_Size / 8) + (_Size / 4) >= rootY ? 1 : 0;
+	int FirstElement = heightMap[rootX + rootY * MySize + rootZ * MySize * MySize] >= 0.0 ? 1 : 0;
 	for (uint16_t x = rootX; x < rootX + MySize; x++)
 	{
-		for (uint16_t z = rootZ; z < rootZ + MySize; z++)
+		for (uint16_t y = rootY; y < rootY + MySize; y++)
 		{
-			for (uint16_t y = rootY; y < rootY + MySize; y++)
+			for (uint16_t z = rootZ; z < rootZ + MySize; z++)
 			{
-				int ActualElement = ((heightMap[x + z * MySize] + 1) / 2) * (_Size / 8) + (_Size / 4) >= y ? 1 : 0;
+				int ActualElement = heightMap[x + y * MySize + z * MySize * MySize] >= 0.0 ? 1 : 0;
 				if (ActualElement != FirstElement)
 				{
 					IsSame = false;
@@ -66,6 +49,23 @@ int SVO::Build_Internal(const std::vector<float>& heightMap, uint16_t depth, uin
 			}
 		}
 	}
+
+	// int FirstElement = ((heightMap[rootX + rootZ * MySize] + 1) / 2) * (_Size / 8) + (_Size / 4) >= rootY ? 1 : 0;
+	// for (uint16_t x = rootX; x < rootX + MySize; x++)
+	// {
+	// 	for (uint16_t z = rootZ; z < rootZ + MySize; z++)
+	// 	{
+	// 		for (uint16_t y = rootY; y < rootY + MySize; y++)
+	// 		{
+	// 			int ActualElement = ((heightMap[x + z * MySize] + 1) / 2) * (_Size / 8) + (_Size / 4) >= y ? 1 : 0;
+	// 			if (ActualElement != FirstElement)
+	// 			{
+	// 				IsSame = false;
+	// 				break;
+	// 			}
+	// 		}
+	// 	}
+	// }
 			
 	if (IsSame)
 	{

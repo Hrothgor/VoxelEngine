@@ -17,11 +17,11 @@ SimpleRenderer::SimpleRenderer()
     auto start = std::chrono::high_resolution_clock::now();
     {
         int size = 128;
-        std::vector<float> noiseOutput(size * size);
+        std::vector<float> noiseOutput(size * size * size);
 
         auto fnSimplex = FastNoise::New<FastNoise::Value>();
-        fnSimplex->GenUniformGrid2D(noiseOutput.data(), 0, 0, size, size, 0.05, 154599848);
-        
+        fnSimplex->GenUniformGrid3D(noiseOutput.data(), 0, 0, 0, size, size, size, 0.01, 1337);
+
         SVO svo(log(size) / log(2));
         svo.Build(noiseOutput);
 
