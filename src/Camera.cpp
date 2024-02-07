@@ -1,5 +1,6 @@
 #include "Camera.hpp"
 #include "InputManager.hpp"
+#include "Engine.hpp"
 #define _USE_MATH_DEFINES
 #include <math.h>
 
@@ -8,22 +9,22 @@ Camera::Camera()
     UpdateViewMatrix();
 
     InputManager::Get()->Bind(GLFW_KEY_W, GLFW_PRESS, InputManager::InputType::KEY, [this](GLFWwindow *window) {
-        _position += _moveSpeed * GetForward();
+        _position += _moveSpeed * GetForward() * Engine::Get()->GetDeltaTime();
     });
     InputManager::Get()->Bind(GLFW_KEY_S, GLFW_PRESS, InputManager::InputType::KEY, [this](GLFWwindow *window) {
-        _position -= _moveSpeed * GetForward();
+        _position -= _moveSpeed * GetForward() * Engine::Get()->GetDeltaTime();
     });
     InputManager::Get()->Bind(GLFW_KEY_A, GLFW_PRESS, InputManager::InputType::KEY, [this](GLFWwindow *window) {
-        _position -= _moveSpeed * GetRight();
+        _position -= _moveSpeed * GetRight() * Engine::Get()->GetDeltaTime();
     });
     InputManager::Get()->Bind(GLFW_KEY_D, GLFW_PRESS, InputManager::InputType::KEY, [this](GLFWwindow *window) {
-        _position += _moveSpeed * GetRight();
+        _position += _moveSpeed * GetRight() * Engine::Get()->GetDeltaTime();
     });
     InputManager::Get()->Bind(GLFW_KEY_SPACE, GLFW_PRESS, InputManager::InputType::KEY, [this](GLFWwindow *window) {
-        _position.y += _moveSpeed;
+        _position.y += _moveSpeed * Engine::Get()->GetDeltaTime();
     });
     InputManager::Get()->Bind(GLFW_KEY_LEFT_SHIFT, GLFW_PRESS, InputManager::InputType::KEY, [this](GLFWwindow *window) {
-        _position.y -= _moveSpeed;
+        _position.y -= _moveSpeed * Engine::Get()->GetDeltaTime();
     });
 
     InputManager::Get()->Bind(GLFW_MOUSE_BUTTON_LEFT, GLFW_PRESS, InputManager::InputType::MOUSE, [this](GLFWwindow *window) {
@@ -52,10 +53,10 @@ void Camera::Update(GLFWwindow *window)
         glfwGetCursorPos(window, &xpos, &ypos);
         glm::vec2 MouseOffset = {xpos - _mousePos.x, ypos - _mousePos.y};
 
-        _rotation.y -= MouseOffset.x * _rotationSpeed;
+        _rotation.y -= MouseOffset.x * _rotationSpeed * Engine::Get()->GetDeltaTime();
         _rotation.y = fmod(_rotation.y, 360.0f);
 
-        _rotation.x -= MouseOffset.y * _rotationSpeed;
+        _rotation.x -= MouseOffset.y * _rotationSpeed * Engine::Get()->GetDeltaTime();
         _rotation.x = glm::clamp(_rotation.x, -80.0f, 80.0f);
 
 

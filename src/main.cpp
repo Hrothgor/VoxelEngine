@@ -5,6 +5,7 @@
 #include "InputManager.hpp"
 #include "SimpleRenderer.hpp"
 #include "Camera.hpp"
+#include "Engine.hpp"
 
 void ProcessInput(GLFWwindow* window)
 {
@@ -53,8 +54,8 @@ int main()
 	// -----------
     while (!glfwWindowShouldClose(window))
     {
-        auto start = std::chrono::high_resolution_clock::now();
-   
+        Engine::Get()->Update(window);
+
         // input
 		// -----
         ProcessInput(window);
@@ -72,8 +73,7 @@ int main()
         glfwSwapBuffers(window);
         glfwPollEvents();
 
-        auto finish = std::chrono::high_resolution_clock::now();
-        std::cout << std::chrono::duration_cast<std::chrono::duration<double, std::milli>>(finish - start).count() << "ms" << std::endl;
+        std::cout << "FPS: " << Engine::Get()->GetFPS() << "\t" << "Delta Time: " << Engine::Get()->GetDeltaTime() * 1000.0 << "ms" << std::endl;
     }
 
     glfwTerminate();

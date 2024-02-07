@@ -14,13 +14,13 @@ SimpleRenderer::SimpleRenderer()
 {
     glGenVertexArrays(1, &_EmptyVAO);
 
-    auto start = std::chrono::high_resolution_clock::now();
+        auto start = std::chrono::high_resolution_clock::now();
     {
         int size = 128;
         std::vector<float> noiseOutput(size * size);
 
         auto fnSimplex = FastNoise::New<FastNoise::Simplex>();
-        fnSimplex->GenUniformGrid2D(noiseOutput.data(), 0, 0, size, size, 0.01, 1337);
+        fnSimplex->GenUniformGrid2D(noiseOutput.data(), 0, 0, size, size, 0.01, rand());
         
         SVO svo(log(size) / log(2));
         svo.Build(noiseOutput);
@@ -28,12 +28,13 @@ SimpleRenderer::SimpleRenderer()
         // Create buffer
         glGenBuffers(1, &_SSBO);
         glBindBuffer(GL_SHADER_STORAGE_BUFFER, _SSBO);
-        glBufferData(GL_SHADER_STORAGE_BUFFER, svo.GetOctree().size() * sizeof(SVO::Node), svo.GetOctree().data(), GL_STATIC_READ);
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, _SSBO);
+        glBufferData(GL_SHADER_STORAGE_BUFFER, svo.GetOctree().size() * sizeof(SVO::Node), svo.GetOctree().data(), GL_STATIC_READ);
         glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
     }
     auto finish = std::chrono::high_resolution_clock::now();
     std::cout << "Time to build: " << std::chrono::duration_cast<std::chrono::duration<double, std::milli>>(finish - start).count() << "ms" << std::endl << std::endl;
+
 }
 
 SimpleRenderer::~SimpleRenderer()
@@ -49,7 +50,6 @@ void SimpleRenderer::StartFrame()
 
 void SimpleRenderer::EndFrame()
 {
-
 }
 
 void SimpleRenderer::DrawFullScreenTriangle(const Camera &camera)

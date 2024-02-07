@@ -30,8 +30,8 @@ class Camera {
         glm::vec3 _rotation = {10.0f, -30.0f, .0f}; //pitch yaw roll
         glm::mat4 _viewMatrix;
 
-        float _moveSpeed = 0.2f;
-        float _rotationSpeed = 0.1f;
+        float _moveSpeed = 30.0;
+        float _rotationSpeed = 20.0;
 
         bool _mouseClicked;
         glm::vec<2, double> _mousePos;
