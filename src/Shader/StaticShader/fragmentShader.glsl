@@ -74,7 +74,7 @@ vec3 TraverseOctree(Ray ray)
         if (!intersectRayAABB(ray, minBounds, maxBounds, tMin, tMax))
             continue;
 
-        color += vec3(0.1);
+        color += vec3(0.01);
 
         Node currentNode = SVO[currentInfo.index];
         if ((currentNode.data & (1 << 31)) == 0)

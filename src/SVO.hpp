@@ -9,7 +9,7 @@ class SVO {
 public:
     struct Node {
         uint32_t data = 0;
-        uint32_t children[8];
+        uint32_t children[8] = {0, 0, 0, 0, 0, 0, 0, 0};
     };
 
     SVO(uint16_t depth = 2);

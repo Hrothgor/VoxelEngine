@@ -16,29 +16,14 @@ SimpleRenderer::SimpleRenderer()
 
     auto start = std::chrono::high_resolution_clock::now();
     {
-        int size = 8;
-        std::vector<float> noiseOutput(size * size * size);
+        int size = 128;
+        std::vector<float> noiseOutput(size * size);
+
         auto fnSimplex = FastNoise::New<FastNoise::Value>();
-        fnSimplex->GenUniformGrid3D(noiseOutput.data(), 0, 0, 0, size, size, size, 0.2, 1337);
+        fnSimplex->GenUniformGrid2D(noiseOutput.data(), 0, 0, size, size, 0.05, 154599848);
         
         SVO svo(log(size) / log(2));
         svo.Build(noiseOutput);
-
-        // Test octrre with bottom filled and one top filled
-        std::vector<SVO::Node> octree;
-        // full octree
-        octree.push_back({0, {1, 2, 3, 4, 5, 6, 7, 8}});
-
-        octree.push_back({2147483649, {0, 0, 0, 0, 0, 0, 0, 0}});
-        octree.push_back({2147483649, {0, 0, 0, 0, 0, 0, 0, 0}});
-        octree.push_back({2147483649, {0, 0, 0, 0, 0, 0, 0, 0}});
-        octree.push_back({2147483649, {0, 0, 0, 0, 0, 0, 0, 0}});
-
-        octree.push_back({2147483648, {0, 0, 0, 0, 0, 0, 0, 0}});
-        octree.push_back({2147483648, {0, 0, 0, 0, 0, 0, 0, 0}});
-        octree.push_back({2147483648, {0, 0, 0, 0, 0, 0, 0, 0}});
-        octree.push_back({2147483649, {0, 0, 0, 0, 0, 0, 0, 0}});
-
 
         // Create buffer
         glGenBuffers(1, &_SSBO);
