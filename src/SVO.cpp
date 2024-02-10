@@ -22,6 +22,7 @@ void SVO::Build(const std::vector<float>& heightMap)
 	std::cout << "Size: " << _Size << std::endl;
 	std::cout << "Max size: " << _Size * _Size * _Size << std::endl;
 	std::cout << "Octree size: " << _Octree.size() << std::endl;
+	std::cout << "Octree size in bytes: " << _Octree.size() * sizeof(Node) / 1024 << " KB" << " ---- " << _Octree.size() * sizeof(Node) / 1024 / 1024 << " MB" << std::endl;
 }
 
 // heightMap is a 2D array of size _Size * _Size
@@ -77,7 +78,7 @@ int SVO::Build_Internal(const std::vector<float>& heightMap, uint16_t depth, uin
 		return (_Octree.size() - 1);
 	} else {
 		Node node;
-		node.data = 0;
+		node.data = FirstElement;
 
 		_Octree.push_back(node);
 		int index = _Octree.size() - 1;

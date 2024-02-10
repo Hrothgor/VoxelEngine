@@ -73,7 +73,7 @@ int main()
         glfwSwapBuffers(window);
         glfwPollEvents();
 
-        std::cout << "FPS: " << Engine::Get()->GetFPS() << "\t" << "Delta Time: " << Engine::Get()->GetDeltaTime() * 1000.0 << "ms" << std::endl;
+        std::cout << "FPS: " << Engine::Get()->GetFPS() << "   \t" << "Delta Time: " << Engine::Get()->GetDeltaTime() * 1000.0 << "ms" << std::endl;
     }
 
     glfwTerminate();

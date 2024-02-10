@@ -52,6 +52,10 @@ struct NodeInfo {
 
 #define SIZE 128
 
+float rand(float x){
+    return fract(sin(x) * 43758.5453);
+}
+
 // Traverse my SVO and find the closest intersection
 vec3 TraverseOctree(Ray ray, out float hit)
 {
@@ -62,7 +66,8 @@ vec3 TraverseOctree(Ray ray, out float hit)
 
     float closestHit = 1000000.0;
     NodeInfo closestNodeInfo = NodeInfo(-1, vec3(0.0), 0);
-    
+    int closestLod = 7;
+
     while (stackIndex > 0)
     {
         NodeInfo currentInfo = stack[--stackIndex];
@@ -76,10 +81,16 @@ vec3 TraverseOctree(Ray ray, out float hit)
         if (!intersectRayAABB(ray, minBounds, maxBounds, tMin, tMax))
             continue;
 
+        // LOD every 50 distance
+        vec3 center = minBounds + (maxBounds - minBounds) / 2.0;
+        float distance = length(center - ray.origin);
+        // int lod = 7 - int(distance / 50.0);
+        int lod = 7;
+
         color += vec3(0.01, 0.0, 0.0);
 
         Node currentNode = SVO[currentInfo.index];
-        if ((currentNode.data & (1 << 31)) == 0)
+        if ((currentNode.data & (1 << 31)) == 0 && currentInfo.depth < lod)
         {
             stack[stackIndex++] = NodeInfo(currentNode.children[0], currentInfo.root, currentInfo.depth + 1);
             stack[stackIndex++] = NodeInfo(currentNode.children[1], vec3(currentInfo.root.x + mySize / 2.0, currentInfo.root.y, currentInfo.root.z), currentInfo.depth + 1);
@@ -94,12 +105,14 @@ vec3 TraverseOctree(Ray ray, out float hit)
             if (tMin < closestHit && (currentNode.data & 1) != 0) {
                 closestHit = tMin;
                 closestNodeInfo = currentInfo;
+                closestLod = lod;
             }
         }
     }
 
     if (closestNodeInfo.index != -1) {
         hit = closestHit;
+        // return vec3(rand(closestLod*8), rand(closestLod+5), rand(closestLod+8));
         return abs(CalculateNormals(ray.origin + ray.direction * closestHit, closestNodeInfo.root, closestNodeInfo.root + vec3(SIZE / (1 << closestNodeInfo.depth))));
     }
     else 
@@ -119,7 +132,6 @@ bool TraverseOctreeSun(Ray ray)
         NodeInfo currentInfo = stack[--stackIndex];
 
         float mySize = SIZE / (1 << currentInfo.depth);
-        // Calculate my bounds from depth and root
         vec3 minBounds = currentInfo.root;
         vec3 maxBounds = currentInfo.root + vec3(mySize);
 
@@ -170,16 +182,14 @@ void main()
 	//final color
     float hit;
     vec3 color = TraverseOctree(cameraRay, hit);
-    if (hit > 0.0) {
-        vec3 sunPos = vec3(512);
-        // Rotate sun around xy
-        sunPos.x = cos(iTime) * 512;
-        sunPos.z = sin(iTime) * 512;
-        cameraRay.origin += cameraRay.direction * (hit - 0.01);
-        cameraRay.direction = normalize(sunPos - cameraRay.origin);
-        if (TraverseOctreeSun(cameraRay))
-            color *= 0.5;
-    }
+    // if (hit > 0.0) {
+    //     vec3 sunPos = vec3(512);
+    //     sunPos.x = cos(iTime) * 512;
+    //     sunPos.z = sin(iTime) * 512;
+    //     cameraRay.origin += cameraRay.direction * (hit - 0.01);
+    //     cameraRay.direction = normalize(sunPos - cameraRay.origin);
+    //     if (TraverseOctreeSun(cameraRay))
+    //         color *= 0.5;
+    // }
 	out_Pixel = vec4(color, 1.0);
-
 }
