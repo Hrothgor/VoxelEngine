@@ -50,7 +50,7 @@ struct NodeInfo {
     int depth;
 } stack[128];
 
-#define SIZE 128
+#define SIZE 128.0
 
 float rand(float x){
     return fract(sin(x) * 43758.5453);
@@ -192,4 +192,146 @@ void main()
     //         color *= 0.5;
     // }
 	out_Pixel = vec4(color, 1.0);
+}
+
+
+
+
+
+
+
+
+// unsigned char a; // because an unsigned char is 8 bits
+
+// int entryNode(vec3 t1, vec3 tMedian) {
+//     int answer = 0;
+//     // select the entry plane and set bits
+//     if (t1.x > t1.y) {
+//         if(t1.x > t1.z) { // PLANE YZ because t1.x is maximum
+//             if (tMedian.y < t1.x) answer |= 2; // set bit at position 1
+//             if (tMedian.z < t1.x) answer |= 4; // set bit at position 2
+//             return answer;
+//         }
+//     }
+//     else if (t1.y > t1.z) { // PLANE XZ because t1.y is maximum
+//         if (tMedian.x < t1.y) answer |= 1; // set bit at position 0
+//         if (tMedian.z < t1.y) answer |= 4; // set bit at position 2
+//         return answer;
+//     }
+//     // PLANE XY because t1.z is maximum
+//     if (tMedian.x < t1.z) answer |= 1; // set bit at position 0
+//     if (tMedian.y < t1.z) answer |= 2; // set bit at position 1
+//     return answer;
+// }
+
+// int new_node(double txm, int x, double tym, int y, double tzm, int z){
+// if(txm < tym){
+//     if(txm < tzm){return x;}  // YZ plane
+// }
+// else{
+//     if(tym < tzm){return y;} // XZ plane
+// }
+// return z; // XY plane;
+// }
+
+// // void proc_subtree (double tx0, double ty0, double tz0, double tx1, double ty1, double tz1, Node* node){
+// //     float txm, tym, tzm;
+
+// void proc_subtree(vec3 tMin, vec3 tMax, NodeInfo nodeInfo) {
+//     int curreNodeIndex;
+
+//     if (tMax.x < 0 || tMax.y < 0 || tMax.z < 0) return;
+//     // if (any(lessThan(tMax, vec3(0.0)))) return;
+    
+
+
+//     if (nodeInfo->IsLEAF){
+//         return;
+//     }
+
+//     vec3 tMedian = (tMin + tMax) * 0.5;
+//     // txm = 0.5*(tx0 + tx1);
+//     // tym = 0.5*(ty0 + ty1);
+//     // tzm = 0.5*(tz0 + tz1);
+
+//     curreNodeIndex = first_node(tx0,ty0,tz0,txm,tym,tzm);
+//     do{
+//         switch (curreNodeIndex)
+//         {
+//         case 0: { 
+//             proc_subtree(tx0,ty0,tz0,txm,tym,tzm,node->children[a]);
+//             curreNodeIndex = new_node(txm,4,tym,2,tzm,1);
+//             break;}
+//         case 1: { 
+//             proc_subtree(tx0,ty0,tzm,txm,tym,tz1,node->children[1^a]);
+//             curreNodeIndex = new_node(txm,5,tym,3,tz1,8);
+//             break;}
+//         case 2: { 
+//             proc_subtree(tx0,tym,tz0,txm,ty1,tzm,node->children[2^a]);
+//             curreNodeIndex = new_node(txm,6,ty1,8,tzm,3);
+//             break;}
+//         case 3: { 
+//             proc_subtree(tx0,tym,tzm,txm,ty1,tz1,node->children[3^a]);
+//             curreNodeIndex = new_node(txm,7,ty1,8,tz1,8);
+//             break;}
+//         case 4: { 
+//             proc_subtree(txm,ty0,tz0,tx1,tym,tzm,node->children[4^a]);
+//             curreNodeIndex = new_node(tx1,8,tym,6,tzm,5);
+//             break;}
+//         case 5: { 
+//             proc_subtree(txm,ty0,tzm,tx1,tym,tz1,node->children[5^a]);
+//             curreNodeIndex = new_node(tx1,8,tym,7,tz1,8);
+//             break;}
+//         case 6: { 
+//             proc_subtree(txm,tym,tz0,tx1,ty1,tzm,node->children[6^a]);
+//             curreNodeIndex = new_node(tx1,8,ty1,8,tzm,7);
+//             break;}
+//         case 7: { 
+//             proc_subtree(txm,tym,tzm,tx1,ty1,tz1,node->children[7^a]);
+//             curreNodeIndex = 8;
+//             break;}
+//         }
+//     } while (curreNodeIndex<8);
+// }
+
+void EfficientTraverseOctree(Ray ray)
+{
+    int a = 0;
+    vec3 octreeSize = vec3(SIZE);
+
+    // fixes for rays with negative direction
+    float stepX = 1 - step(0.0, ray.direction.x);
+    ray.origin.x = stepX * (octreeSize.x - ray.origin.x) + (1 - stepX) * ray.origin.x;
+    ray.direction.x = stepX * -ray.direction.x + (1 - stepX) * ray.direction.x;
+    a |= int(stepX * 4);
+
+    float stepY = 1 - step(0.0, ray.direction.y);
+    ray.origin.y = stepY * (octreeSize.y - ray.origin.y) + (1 - stepY) * ray.origin.y;
+    ray.direction.y = stepY * -ray.direction.y + (1 - stepY) * ray.direction.y;
+    a |= int(stepY * 2);
+
+    float stepZ = 1 - step(0.0, ray.direction.z);
+    ray.origin.z = stepZ * (octreeSize.z - ray.origin.z) + (1 - stepZ) * ray.origin.z;
+    ray.direction.z = stepZ * -ray.direction.z + (1 - stepZ) * ray.direction.z;
+    a |= int(stepZ * 1);
+
+//     if(ray.direction[0] < 0){
+//     ray.origin[0] = octree->center[0] * 2 - ray.origin[0];//camera origin fix
+//     ray.direction[0] = - ray.direction[0];
+//     a |= 4 ; //bitwise OR (latest bits are XYZ)
+// }
+// if(ray.direction[1] < 0){
+//     ray.origin[1] = octree->center[1] * 2 - ray.origin[1];
+//     ray.direction[1] = - ray.direction[1];
+//     a |= 2 ; 
+// }
+// if(ray.direction[2] < 0){
+//     ray.origin[2] = octree->center[2] * 2 - ray.origin[2];
+//     ray.direction[2] = - ray.direction[2];
+//     a |= 1 ; 
+// }
+
+    float tMin, tMax;
+    if (intersectRayAABB(ray, vec3(0.0), vec3(SIZE), tMin, tMax))
+        proc_subtree(tMin, tMax, SVO[0]);
 }

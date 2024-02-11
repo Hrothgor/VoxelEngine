@@ -83,14 +83,14 @@ int SVO::Build_Internal(const std::vector<float>& heightMap, uint16_t depth, uin
 		_Octree.push_back(node);
 		int index = _Octree.size() - 1;
 
-		_Octree[index].children[0] = Build_Internal(heightMap, depth + 1, rootX, rootY, rootZ);
-		_Octree[index].children[1] = Build_Internal(heightMap, depth + 1, rootX + MySize / 2, rootY, rootZ);
-		_Octree[index].children[2] = Build_Internal(heightMap, depth + 1, rootX, rootY + MySize / 2, rootZ);
+		_Octree[index].children[0] = Build_Internal(heightMap, depth + 1, rootX				, rootY				, rootZ);
+		_Octree[index].children[1] = Build_Internal(heightMap, depth + 1, rootX + MySize / 2, rootY				, rootZ);
+		_Octree[index].children[2] = Build_Internal(heightMap, depth + 1, rootX				, rootY + MySize / 2, rootZ);
 		_Octree[index].children[3] = Build_Internal(heightMap, depth + 1, rootX + MySize / 2, rootY + MySize / 2, rootZ);
 
-		_Octree[index].children[4] = Build_Internal(heightMap, depth + 1, rootX, rootY, rootZ + MySize / 2);
-		_Octree[index].children[5] = Build_Internal(heightMap, depth + 1, rootX + MySize / 2, rootY, rootZ + MySize / 2);
-		_Octree[index].children[6] = Build_Internal(heightMap, depth + 1, rootX, rootY + MySize / 2, rootZ + MySize / 2);
+		_Octree[index].children[4] = Build_Internal(heightMap, depth + 1, rootX				, rootY				, rootZ + MySize / 2);
+		_Octree[index].children[5] = Build_Internal(heightMap, depth + 1, rootX + MySize / 2, rootY				, rootZ + MySize / 2);
+		_Octree[index].children[6] = Build_Internal(heightMap, depth + 1, rootX				, rootY + MySize / 2, rootZ + MySize / 2);
 		_Octree[index].children[7] = Build_Internal(heightMap, depth + 1, rootX + MySize / 2, rootY + MySize / 2, rootZ + MySize / 2);
 
 		return (index);
