@@ -16,7 +16,7 @@ SimpleRenderer::SimpleRenderer()
 
         auto start = std::chrono::high_resolution_clock::now();
     {
-        int size = 128;
+        int size = 8;
         std::vector<float> noiseOutput(size * size);
 
         auto fnSimplex = FastNoise::New<FastNoise::Simplex>();

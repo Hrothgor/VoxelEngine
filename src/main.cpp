@@ -29,7 +29,7 @@ int main()
         return -1;
     }
     glfwMakeContextCurrent(window);
-    glfwSwapInterval(0);
+    glfwSwapInterval(1);
     glfwSetFramebufferSizeCallback(window, [](GLFWwindow* window, int width, int height)
     {
         glViewport(0, 0, width, height);
@@ -73,7 +73,7 @@ int main()
         glfwSwapBuffers(window);
         glfwPollEvents();
 
-        std::cout << "FPS: " << Engine::Get()->GetFPS() << "   \t" << "Delta Time: " << Engine::Get()->GetDeltaTime() * 1000.0 << "ms" << std::endl;
+        // std::cout << "FPS: " << Engine::Get()->GetFPS() << "   \t" << "Delta Time: " << Engine::Get()->GetDeltaTime() * 1000.0 << "ms" << std::endl;
     }
 
     glfwTerminate();

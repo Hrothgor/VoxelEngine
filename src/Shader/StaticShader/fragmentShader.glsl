@@ -9,26 +9,35 @@ uniform mat4 iViewMatrix;
 
 out vec4 out_Pixel;
 
+struct Ray {
+    vec3 origin;
+    vec3 direction;
+};
+
 struct Node {
     int data;
     int children[8];
 };
 
-struct Ray {
-    vec3 origin;
-    vec3 direction;
-};
+struct NodeInfo {
+    int index;
+    vec3 root;
+    int depth;
+    vec3 t1;
+    vec3 t2;
+} stack[128];
 
 layout(std430, binding = 0) readonly buffer SSBO
 {
     Node SVO[];
 };
 
-bool intersectRayAABB(Ray ray, vec3 minBounds, vec3 maxBounds, out float tMin, out float tMax) {
+bool intersectRayAABB(Ray ray, vec3 minBounds, vec3 maxBounds, out vec3 t1, out vec3 t2, out float tMin, out float tMax) {
     vec3 invDirection = 1.0 / ray.direction;
-    vec3 t1 = (minBounds - ray.origin) * invDirection;
-    vec3 t2 = (maxBounds - ray.origin) * invDirection;
+    t1 = (minBounds - ray.origin) * invDirection;
+    t2 = (maxBounds - ray.origin) * invDirection;
 
+    // TODO: check if we can take them off since our ray direction is always positive
     vec3 tMinVec = min(t1, t2);
     vec3 tMaxVec = max(t1, t2);
 
@@ -44,28 +53,23 @@ vec3 CalculateNormals(vec3 hit, vec3 minBounds, vec3 maxBounds) {
     return normalize(normal);
 }
 
-struct NodeInfo {
-    int index;
-    vec3 root;
-    int depth;
-} stack[128];
 
-#define SIZE 128.0
+#define SIZE 32.0
 
 float rand(float x){
     return fract(sin(x) * 43758.5453);
 }
 
 // Traverse my SVO and find the closest intersection
-vec3 TraverseOctree(Ray ray, out float hit)
+vec3 TraverseOctree(Ray ray)
 {
     vec3 color = vec3(0.0);
 
     int stackIndex = 0;
-    stack[stackIndex++] = NodeInfo(0, vec3(0.0), 0);
+    stack[stackIndex++] = NodeInfo(0, vec3(0.0), 0, vec3(0.0), vec3(0.0));
 
     float closestHit = 1000000.0;
-    NodeInfo closestNodeInfo = NodeInfo(-1, vec3(0.0), 0);
+    NodeInfo closestNodeInfo = NodeInfo(-1, vec3(0.0), 0, vec3(0.0), vec3(0.0));
     int closestLod = 7;
 
     while (stackIndex > 0)
@@ -77,8 +81,9 @@ vec3 TraverseOctree(Ray ray, out float hit)
         vec3 minBounds = currentInfo.root;
         vec3 maxBounds = currentInfo.root + vec3(mySize);
 
+        vec3 t1, t2;
         float tMin, tMax;
-        if (!intersectRayAABB(ray, minBounds, maxBounds, tMin, tMax))
+        if (!intersectRayAABB(ray, minBounds, maxBounds, t1, t2, tMin, tMax))
             continue;
 
         // LOD every 50 distance
@@ -92,15 +97,15 @@ vec3 TraverseOctree(Ray ray, out float hit)
         Node currentNode = SVO[currentInfo.index];
         if ((currentNode.data & (1 << 31)) == 0 && currentInfo.depth < lod)
         {
-            stack[stackIndex++] = NodeInfo(currentNode.children[0], currentInfo.root, currentInfo.depth + 1);
-            stack[stackIndex++] = NodeInfo(currentNode.children[1], vec3(currentInfo.root.x + mySize / 2.0, currentInfo.root.y, currentInfo.root.z), currentInfo.depth + 1);
-            stack[stackIndex++] = NodeInfo(currentNode.children[2], vec3(currentInfo.root.x, currentInfo.root.y + mySize / 2.0, currentInfo.root.z), currentInfo.depth + 1);
-            stack[stackIndex++] = NodeInfo(currentNode.children[3], vec3(currentInfo.root.x + mySize / 2.0, currentInfo.root.y + mySize / 2.0, currentInfo.root.z), currentInfo.depth + 1);
+            stack[stackIndex++] = NodeInfo(currentNode.children[0], currentInfo.root, currentInfo.depth + 1, vec3(0.0), vec3(0.0));
+            stack[stackIndex++] = NodeInfo(currentNode.children[1], vec3(currentInfo.root.x + mySize / 2.0, currentInfo.root.y, currentInfo.root.z), currentInfo.depth + 1, vec3(0.0), vec3(0.0));
+            stack[stackIndex++] = NodeInfo(currentNode.children[2], vec3(currentInfo.root.x, currentInfo.root.y + mySize / 2.0, currentInfo.root.z), currentInfo.depth + 1, vec3(0.0), vec3(0.0));
+            stack[stackIndex++] = NodeInfo(currentNode.children[3], vec3(currentInfo.root.x + mySize / 2.0, currentInfo.root.y + mySize / 2.0, currentInfo.root.z), currentInfo.depth + 1, vec3(0.0), vec3(0.0));
 
-            stack[stackIndex++] = NodeInfo(currentNode.children[4], vec3(currentInfo.root.x, currentInfo.root.y, currentInfo.root.z + mySize / 2.0), currentInfo.depth + 1);
-            stack[stackIndex++] = NodeInfo(currentNode.children[5], vec3(currentInfo.root.x + mySize / 2.0, currentInfo.root.y, currentInfo.root.z + mySize / 2.0), currentInfo.depth + 1);
-            stack[stackIndex++] = NodeInfo(currentNode.children[6], vec3(currentInfo.root.x, currentInfo.root.y + mySize / 2.0, currentInfo.root.z + mySize / 2.0), currentInfo.depth + 1);
-            stack[stackIndex++] = NodeInfo(currentNode.children[7], vec3(currentInfo.root.x + mySize / 2.0, currentInfo.root.y + mySize / 2.0, currentInfo.root.z + mySize / 2.0), currentInfo.depth + 1);
+            stack[stackIndex++] = NodeInfo(currentNode.children[4], vec3(currentInfo.root.x, currentInfo.root.y, currentInfo.root.z + mySize / 2.0), currentInfo.depth + 1, vec3(0.0), vec3(0.0));
+            stack[stackIndex++] = NodeInfo(currentNode.children[5], vec3(currentInfo.root.x + mySize / 2.0, currentInfo.root.y, currentInfo.root.z + mySize / 2.0), currentInfo.depth + 1, vec3(0.0), vec3(0.0));
+            stack[stackIndex++] = NodeInfo(currentNode.children[6], vec3(currentInfo.root.x, currentInfo.root.y + mySize / 2.0, currentInfo.root.z + mySize / 2.0), currentInfo.depth + 1, vec3(0.0), vec3(0.0));
+            stack[stackIndex++] = NodeInfo(currentNode.children[7], vec3(currentInfo.root.x + mySize / 2.0, currentInfo.root.y + mySize / 2.0, currentInfo.root.z + mySize / 2.0), currentInfo.depth + 1, vec3(0.0), vec3(0.0));
         } else {
             if (tMin < closestHit && (currentNode.data & 1) != 0) {
                 closestHit = tMin;
@@ -111,7 +116,6 @@ vec3 TraverseOctree(Ray ray, out float hit)
     }
 
     if (closestNodeInfo.index != -1) {
-        hit = closestHit;
         // return vec3(rand(closestLod*8), rand(closestLod+5), rand(closestLod+8));
         return abs(CalculateNormals(ray.origin + ray.direction * closestHit, closestNodeInfo.root, closestNodeInfo.root + vec3(SIZE / (1 << closestNodeInfo.depth))));
     }
@@ -119,45 +123,158 @@ vec3 TraverseOctree(Ray ray, out float hit)
         return color;
 }
 
-bool TraverseOctreeSun(Ray ray)
-{
-    int stackIndex = 0;
-    stack[stackIndex++] = NodeInfo(0, vec3(0.0), 0);
 
-    float closestHit = 1000000.0;
-    NodeInfo closestNodeInfo = NodeInfo(-1, vec3(0.0), 0);
-    
-    while (stackIndex > 0)
-    {
-        NodeInfo currentInfo = stack[--stackIndex];
 
-        float mySize = SIZE / (1 << currentInfo.depth);
-        vec3 minBounds = currentInfo.root;
-        vec3 maxBounds = currentInfo.root + vec3(mySize);
 
-        float tMin, tMax;
-        if (!intersectRayAABB(ray, minBounds, maxBounds, tMin, tMax))
-            continue;
 
-        Node currentNode = SVO[currentInfo.index];
-        if ((currentNode.data & (1 << 31)) == 0)
-        {
-            stack[stackIndex++] = NodeInfo(currentNode.children[0], currentInfo.root, currentInfo.depth + 1);
-            stack[stackIndex++] = NodeInfo(currentNode.children[1], vec3(currentInfo.root.x + mySize / 2.0, currentInfo.root.y, currentInfo.root.z), currentInfo.depth + 1);
-            stack[stackIndex++] = NodeInfo(currentNode.children[2], vec3(currentInfo.root.x, currentInfo.root.y + mySize / 2.0, currentInfo.root.z), currentInfo.depth + 1);
-            stack[stackIndex++] = NodeInfo(currentNode.children[3], vec3(currentInfo.root.x + mySize / 2.0, currentInfo.root.y + mySize / 2.0, currentInfo.root.z), currentInfo.depth + 1);
 
-            stack[stackIndex++] = NodeInfo(currentNode.children[4], vec3(currentInfo.root.x, currentInfo.root.y, currentInfo.root.z + mySize / 2.0), currentInfo.depth + 1);
-            stack[stackIndex++] = NodeInfo(currentNode.children[5], vec3(currentInfo.root.x + mySize / 2.0, currentInfo.root.y, currentInfo.root.z + mySize / 2.0), currentInfo.depth + 1);
-            stack[stackIndex++] = NodeInfo(currentNode.children[6], vec3(currentInfo.root.x, currentInfo.root.y + mySize / 2.0, currentInfo.root.z + mySize / 2.0), currentInfo.depth + 1);
-            stack[stackIndex++] = NodeInfo(currentNode.children[7], vec3(currentInfo.root.x + mySize / 2.0, currentInfo.root.y + mySize / 2.0, currentInfo.root.z + mySize / 2.0), currentInfo.depth + 1);
-        } else {
-            if ((currentNode.data & 1) != 0) {
-                return true;
-            }
+int entryNode(vec3 t1, vec3 tm) {
+    int answer = 0;
+    // select the entry plane and set bits
+    if (t1.x > t1.y) {
+        if(t1.x > t1.z) { // PLANE YZ because t1.x is maximum
+            if (tm.y < t1.x) answer |= 2; // set bit at position 1
+            if (tm.z < t1.x) answer |= 4; // set bit at position 2
+            return answer;
         }
     }
-    return false;
+    else if (t1.y > t1.z) { // PLANE XZ because t1.y is maximum
+        if (tm.x < t1.y) answer |= 1; // set bit at position 0
+        if (tm.z < t1.y) answer |= 4; // set bit at position 2
+        return answer;
+    }
+    // PLANE XY because t1.z is maximum
+    if (tm.x < t1.z) answer |= 1; // set bit at position 0
+    if (tm.y < t1.z) answer |= 2; // set bit at position 1
+    return answer;
+}
+
+int nextNode(vec3 t, int x, int y, int z) {
+    if (t.x < t.y) {
+        if (t.x < t.z) 
+            return x;  // YZ plane because t.x is minimum
+    }
+    else if (t.y < t.z) {
+        return y; // XZ plane because t.y is minimum
+    }
+    return z; // XY plane because t.z is minimum
+}
+
+vec3 EfficientTraverseOctree(Ray ray)
+{
+    int a = 0;
+    vec3 octreeSize = vec3(SIZE);
+
+    // fixes for rays with negative direction
+    float stepX = 1 - step(0.0, ray.direction.x);
+    ray.origin.x = stepX * (octreeSize.x - ray.origin.x) + (1 - stepX) * ray.origin.x;
+    ray.direction.x = stepX * -ray.direction.x + (1 - stepX) * ray.direction.x;
+    a |= int(stepX * 1);
+
+    float stepY = 1 - step(0.0, ray.direction.y);
+    ray.origin.y = stepY * (octreeSize.y - ray.origin.y) + (1 - stepY) * ray.origin.y;
+    ray.direction.y = stepY * -ray.direction.y + (1 - stepY) * ray.direction.y;
+    a |= int(stepY * 2);
+
+    float stepZ = 1 - step(0.0, ray.direction.z);
+    ray.origin.z = stepZ * (octreeSize.z - ray.origin.z) + (1 - stepZ) * ray.origin.z;
+    ray.direction.z = stepZ * -ray.direction.z + (1 - stepZ) * ray.direction.z;
+    a |= int(stepZ * 4);
+
+    vec3 color = vec3(0.0);
+
+    vec3 t1, t2;
+    float tMin, tMax;
+    if (!intersectRayAABB(ray, vec3(0.0), octreeSize, t1, t2, tMin, tMax))
+        return vec3(0.1, 0.5, 0.6);
+
+    int stackIndex = 0;
+    stack[stackIndex++] = NodeInfo(0, vec3(0.0), 0, t1, t2);
+
+    while (stackIndex > 0)
+    {
+        NodeInfo current = stack[--stackIndex];
+
+        if (current.t2.x < 0 || current.t2.y < 0 || current.t2.z < 0) continue;
+
+        float mySize = SIZE / (1 << current.depth);
+        vec3 minBounds = current.root;
+        vec3 maxBounds = current.root + vec3(mySize);
+
+        Node currentNode = SVO[current.index];
+        // Branch
+        if ((currentNode.data & (1 << 31)) == 0) {
+            color += vec3(0.01);
+
+            vec3 tm = (current.t1 + current.t2) * 0.5;
+
+            int count = 0;
+            NodeInfo tmpStack[3]; // because we push back but here we want to push front
+            int currentNodeIndex = entryNode(current.t1, tm);
+            while (currentNodeIndex > 0)
+            {
+                switch (currentNodeIndex)
+                {
+                case 0: {
+                    tmpStack[count++] = NodeInfo(currentNode.children[a],
+                                        current.root, current.depth + 1,
+                                        current.t1, tm);
+                    currentNodeIndex = nextNode(vec3(tm.x, tm.y, tm.z), 1, 2, 4);
+                    break;}
+                case 1: { 
+                    tmpStack[count++] = NodeInfo(currentNode.children[1^a],
+                                        vec3(current.root.x + mySize / 2.0, current.root.y, current.root.z), current.depth + 1,
+                                        vec3(tm.x, current.t1.y, current.t1.z), vec3(current.t2.x, tm.y, tm.z));
+                    currentNodeIndex = nextNode(vec3(current.t2.x, tm.y, tm.z), -1, 3, 5);
+                    break;}
+                case 2: { 
+                    tmpStack[count++] = NodeInfo(currentNode.children[2^a],
+                                        vec3(current.root.x, current.root.y + mySize / 2.0, current.root.z), current.depth + 1,
+                                        vec3(current.t1.x, tm.y, current.t1.z), vec3(tm.x, current.t2.y, tm.z));
+                    currentNodeIndex = nextNode(vec3(tm.x, current.t2.y, tm.z), 3, -1, 6);
+                    break;}
+                case 3: { 
+                    tmpStack[count++] = NodeInfo(currentNode.children[3^a],
+                                        vec3(current.root.x + mySize / 2.0, current.root.y + mySize / 2.0, current.root.z), current.depth + 1,
+                                        vec3(tm.x, tm.y, current.t1.z), vec3(current.t2.x, current.t2.y, tm.z));
+                    currentNodeIndex = nextNode(vec3(current.t2.x, current.t2.y, tm.z), -1, -1, 7);
+                    break;}
+                case 4: { 
+                    tmpStack[count++] = NodeInfo(currentNode.children[4^a],
+                                        vec3(current.root.x, current.root.y, current.root.z + mySize / 2.0), current.depth + 1,
+                                        vec3(current.t1.x, current.t1.y, tm.z), vec3(tm.x, tm.y, current.t2.z));
+                    currentNodeIndex = nextNode(vec3(tm.x, tm.y, current.t2.z), 5, 6, -1);
+                    break;}
+                case 5: { 
+                    tmpStack[count++] = NodeInfo(currentNode.children[5^a],
+                                        vec3(current.root.x + mySize / 2.0, current.root.y, current.root.z + mySize / 2.0), current.depth + 1,
+                                        vec3(tm.x, current.t1.y, tm.z), vec3(current.t2.x, tm.y, current.t2.z));
+                    currentNodeIndex = nextNode(vec3(current.t2.x, tm.y, current.t2.z), -1, 7, -1);
+                    break;}
+                case 6: { 
+                    tmpStack[count++] = NodeInfo(currentNode.children[6^a],
+                                        vec3(current.root.x, current.root.y + mySize / 2.0, current.root.z + mySize / 2.0), current.depth + 1,
+                                        vec3(current.t1.x, tm.y, tm.z), vec3(tm.x, current.t2.y, current.t2.z));
+                    currentNodeIndex = nextNode(vec3(tm.x, current.t2.y, current.t2.z), 7, -1, -1);
+                    break;}
+                case 7: { 
+                    tmpStack[count++] = NodeInfo(currentNode.children[7^a],
+                                        vec3(current.root.x + mySize / 2.0, current.root.y + mySize / 2.0, current.root.z + mySize / 2.0), current.depth + 1,
+                                        tm, current.t2);
+                    currentNodeIndex = -1;
+                    break;}
+                }
+            }
+            for (int i = count - 1; i >= 0; i--) {
+                stack[stackIndex++] = tmpStack[i];
+            }
+        } else if ((currentNode.data & 1) != 0) { // Leaf is solid
+            float tClosest = max(max(current.t1.x, current.t1.y), current.t1.z);
+            return abs(CalculateNormals(ray.origin + ray.direction * tClosest, minBounds, maxBounds));
+        }
+    }
+
+    return color;
 }
 
 void main()
@@ -180,17 +297,7 @@ void main()
 	Ray cameraRay = Ray(camPos, camDir);
 
 	//final color
-    float hit;
-    vec3 color = TraverseOctree(cameraRay, hit);
-    // if (hit > 0.0) {
-    //     vec3 sunPos = vec3(512);
-    //     sunPos.x = cos(iTime) * 512;
-    //     sunPos.z = sin(iTime) * 512;
-    //     cameraRay.origin += cameraRay.direction * (hit - 0.01);
-    //     cameraRay.direction = normalize(sunPos - cameraRay.origin);
-    //     if (TraverseOctreeSun(cameraRay))
-    //         color *= 0.5;
-    // }
+    vec3 color = EfficientTraverseOctree(cameraRay);
 	out_Pixel = vec4(color, 1.0);
 }
 
@@ -200,47 +307,12 @@ void main()
 
 
 
-
-// int a;
-
-// int entryNode(vec3 t1, vec3 tm) {
-//     int answer = 0;
-//     // select the entry plane and set bits
-//     if (t1.x > t1.y) {
-//         if(t1.x > t1.z) { // PLANE YZ because t1.x is maximum
-//             if (tm.y < t1.x) answer |= 2; // set bit at position 1
-//             if (tm.z < t1.x) answer |= 4; // set bit at position 2
-//             return answer;
-//         }
-//     }
-//     else if (t1.y > t1.z) { // PLANE XZ because t1.y is maximum
-//         if (tm.x < t1.y) answer |= 1; // set bit at position 0
-//         if (tm.z < t1.y) answer |= 4; // set bit at position 2
-//         return answer;
-//     }
-//     // PLANE XY because t1.z is maximum
-//     if (tm.x < t1.z) answer |= 1; // set bit at position 0
-//     if (tm.y < t1.z) answer |= 2; // set bit at position 1
-//     return answer;
-// }
-
-// int nextNode(vec3 t, int x, int y, int z) {
-//     if (t.x < t.y) {
-//         if (t.x < t.z) 
-//             return x;  // YZ plane because t.x is minimum
-//     }
-//     else if (t.y < t.z) {
-//         return y; // XZ plane because t.y is minimum
-//     }
-//     return z; // XY plane because t.z is minimum
-// }
-
 // // void proc_subtree (double tx0, double ty0, double tz0, double tx1, double ty1, double tz1, Node* node){
 // //     float txm, tym, tzm;
 
 // void proc_subtree(vec3 t1, vec3 t2, NodeInfo nodeInfo) {
 
-//     if (tMax.x < 0 || tMax.y < 0 || tMax.z < 0) return;
+//     if (t2.x < 0 || t2.y < 0 || t2.z < 0) return;
 //     // if (any(lessThan(tMax, vec3(0.0)))) return;
     
 
@@ -301,45 +373,3 @@ void main()
 //         }
 //     } while (currentNodeIndex>0);
 // }
-
-void EfficientTraverseOctree(Ray ray)
-{
-    int a = 0;
-    vec3 octreeSize = vec3(SIZE);
-
-    // fixes for rays with negative direction
-    float stepX = 1 - step(0.0, ray.direction.x);
-    ray.origin.x = stepX * (octreeSize.x - ray.origin.x) + (1 - stepX) * ray.origin.x;
-    ray.direction.x = stepX * -ray.direction.x + (1 - stepX) * ray.direction.x;
-    a |= int(stepX * 1);
-
-    float stepY = 1 - step(0.0, ray.direction.y);
-    ray.origin.y = stepY * (octreeSize.y - ray.origin.y) + (1 - stepY) * ray.origin.y;
-    ray.direction.y = stepY * -ray.direction.y + (1 - stepY) * ray.direction.y;
-    a |= int(stepY * 2);
-
-    float stepZ = 1 - step(0.0, ray.direction.z);
-    ray.origin.z = stepZ * (octreeSize.z - ray.origin.z) + (1 - stepZ) * ray.origin.z;
-    ray.direction.z = stepZ * -ray.direction.z + (1 - stepZ) * ray.direction.z;
-    a |= int(stepZ * 4);
-
-// if (ray.direction[0] < 0){
-//     ray.origin[0] = octree->center[0] * 2 - ray.origin[0];//camera origin fix
-//     ray.direction[0] = - ray.direction[0];
-//     a |= 4 ; //bitwise OR (latest bits are XYZ)
-// }
-// if(ray.direction[1] < 0){
-//     ray.origin[1] = octree->center[1] * 2 - ray.origin[1];
-//     ray.direction[1] = - ray.direction[1];
-//     a |= 2 ; 
-// }
-// if(ray.direction[2] < 0){
-//     ray.origin[2] = octree->center[2] * 2 - ray.origin[2];
-//     ray.direction[2] = - ray.direction[2];
-//     a |= 1 ; 
-// }
-
-    float tMin, tMax;
-    if (intersectRayAABB(ray, vec3(0.0), vec3(SIZE), tMin, tMax))
-        proc_subtree(tMin, tMax, SVO[0]);
-}
