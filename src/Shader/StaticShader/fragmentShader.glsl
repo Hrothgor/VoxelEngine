@@ -201,44 +201,44 @@ void main()
 
 
 
-// unsigned char a; // because an unsigned char is 8 bits
+// int a;
 
-// int entryNode(vec3 t1, vec3 tMedian) {
+// int entryNode(vec3 t1, vec3 tm) {
 //     int answer = 0;
 //     // select the entry plane and set bits
 //     if (t1.x > t1.y) {
 //         if(t1.x > t1.z) { // PLANE YZ because t1.x is maximum
-//             if (tMedian.y < t1.x) answer |= 2; // set bit at position 1
-//             if (tMedian.z < t1.x) answer |= 4; // set bit at position 2
+//             if (tm.y < t1.x) answer |= 2; // set bit at position 1
+//             if (tm.z < t1.x) answer |= 4; // set bit at position 2
 //             return answer;
 //         }
 //     }
 //     else if (t1.y > t1.z) { // PLANE XZ because t1.y is maximum
-//         if (tMedian.x < t1.y) answer |= 1; // set bit at position 0
-//         if (tMedian.z < t1.y) answer |= 4; // set bit at position 2
+//         if (tm.x < t1.y) answer |= 1; // set bit at position 0
+//         if (tm.z < t1.y) answer |= 4; // set bit at position 2
 //         return answer;
 //     }
 //     // PLANE XY because t1.z is maximum
-//     if (tMedian.x < t1.z) answer |= 1; // set bit at position 0
-//     if (tMedian.y < t1.z) answer |= 2; // set bit at position 1
+//     if (tm.x < t1.z) answer |= 1; // set bit at position 0
+//     if (tm.y < t1.z) answer |= 2; // set bit at position 1
 //     return answer;
 // }
 
-// int new_node(double txm, int x, double tym, int y, double tzm, int z){
-// if(txm < tym){
-//     if(txm < tzm){return x;}  // YZ plane
-// }
-// else{
-//     if(tym < tzm){return y;} // XZ plane
-// }
-// return z; // XY plane;
+// int nextNode(vec3 t, int x, int y, int z) {
+//     if (t.x < t.y) {
+//         if (t.x < t.z) 
+//             return x;  // YZ plane because t.x is minimum
+//     }
+//     else if (t.y < t.z) {
+//         return y; // XZ plane because t.y is minimum
+//     }
+//     return z; // XY plane because t.z is minimum
 // }
 
 // // void proc_subtree (double tx0, double ty0, double tz0, double tx1, double ty1, double tz1, Node* node){
 // //     float txm, tym, tzm;
 
-// void proc_subtree(vec3 tMin, vec3 tMax, NodeInfo nodeInfo) {
-//     int curreNodeIndex;
+// void proc_subtree(vec3 t1, vec3 t2, NodeInfo nodeInfo) {
 
 //     if (tMax.x < 0 || tMax.y < 0 || tMax.z < 0) return;
 //     // if (any(lessThan(tMax, vec3(0.0)))) return;
@@ -249,49 +249,57 @@ void main()
 //         return;
 //     }
 
-//     vec3 tMedian = (tMin + tMax) * 0.5;
+//     vec3 tm = (t1 + t2) * 0.5;
 //     // txm = 0.5*(tx0 + tx1);
 //     // tym = 0.5*(ty0 + ty1);
 //     // tzm = 0.5*(tz0 + tz1);
 
-//     curreNodeIndex = first_node(tx0,ty0,tz0,txm,tym,tzm);
+//     int currentNodeIndex = entryNode(t1.x, t1.y, t1.z, tm.x,tm.y,tm.z);
 //     do{
-//         switch (curreNodeIndex)
+//         switch (currentNodeIndex)
 //         {
 //         case 0: { 
 //             proc_subtree(tx0,ty0,tz0,txm,tym,tzm,node->children[a]);
-//             curreNodeIndex = new_node(txm,4,tym,2,tzm,1);
+//             // currentNodeIndex = new_node(txm,4,tym,2,tzm,1);
+//             currentNodeIndex = nextNode(vec3(tm.x, tm.y, tm.z), 1, 2, 4);
 //             break;}
 //         case 1: { 
 //             proc_subtree(tx0,ty0,tzm,txm,tym,tz1,node->children[1^a]);
-//             curreNodeIndex = new_node(txm,5,tym,3,tz1,8);
+//             // currentNodeIndex = new_node(txm,5,tym,3,tz1,8);
+//             currentNodeIndex = nextNode(vec3(t2.x, tm.y, tm.z), -1, 3, 5);
 //             break;}
 //         case 2: { 
 //             proc_subtree(tx0,tym,tz0,txm,ty1,tzm,node->children[2^a]);
-//             curreNodeIndex = new_node(txm,6,ty1,8,tzm,3);
+//             // currentNodeIndex = new_node(txm,6,ty1,8,tzm,3);
+//             currentNodeIndex = nextNode(vec3(tm.x, t2.y, tm.z), 3, -1, 6);
 //             break;}
 //         case 3: { 
 //             proc_subtree(tx0,tym,tzm,txm,ty1,tz1,node->children[3^a]);
-//             curreNodeIndex = new_node(txm,7,ty1,8,tz1,8);
+//             // currentNodeIndex = new_node(txm,7,ty1,8,tz1,8);
+//             currentNodeIndex = nextNode(vec3(t2.x, t2.y, tm.z), -1, -1, 7);
 //             break;}
 //         case 4: { 
 //             proc_subtree(txm,ty0,tz0,tx1,tym,tzm,node->children[4^a]);
-//             curreNodeIndex = new_node(tx1,8,tym,6,tzm,5);
+//             // currentNodeIndex = new_node(tx1,8,tym,6,tzm,5);
+//             currentNodeIndex = nextNode(vec3(tm.x, tm.y, t2.z), 5, 6, -1);
 //             break;}
 //         case 5: { 
 //             proc_subtree(txm,ty0,tzm,tx1,tym,tz1,node->children[5^a]);
-//             curreNodeIndex = new_node(tx1,8,tym,7,tz1,8);
+//             // currentNodeIndex = new_node(tx1,8,tym,7,tz1,8);
+//             currentNodeIndex = nextNode(vec3(t2.x, tm.y, t2.z), -1, 7, -1);
 //             break;}
 //         case 6: { 
 //             proc_subtree(txm,tym,tz0,tx1,ty1,tzm,node->children[6^a]);
-//             curreNodeIndex = new_node(tx1,8,ty1,8,tzm,7);
+//             // currentNodeIndex = new_node(tx1,8,ty1,8,tzm,7);
+//             currentNodeIndex = nextNode(vec3(tm.x, t2.y, t2.z), 7, -1, -1);
 //             break;}
 //         case 7: { 
 //             proc_subtree(txm,tym,tzm,tx1,ty1,tz1,node->children[7^a]);
-//             curreNodeIndex = 8;
+//             // currentNodeIndex = 8;
+//             currentNodeIndex = -1;
 //             break;}
 //         }
-//     } while (curreNodeIndex<8);
+//     } while (currentNodeIndex>0);
 // }
 
 void EfficientTraverseOctree(Ray ray)
@@ -303,7 +311,7 @@ void EfficientTraverseOctree(Ray ray)
     float stepX = 1 - step(0.0, ray.direction.x);
     ray.origin.x = stepX * (octreeSize.x - ray.origin.x) + (1 - stepX) * ray.origin.x;
     ray.direction.x = stepX * -ray.direction.x + (1 - stepX) * ray.direction.x;
-    a |= int(stepX * 4);
+    a |= int(stepX * 1);
 
     float stepY = 1 - step(0.0, ray.direction.y);
     ray.origin.y = stepY * (octreeSize.y - ray.origin.y) + (1 - stepY) * ray.origin.y;
@@ -313,9 +321,9 @@ void EfficientTraverseOctree(Ray ray)
     float stepZ = 1 - step(0.0, ray.direction.z);
     ray.origin.z = stepZ * (octreeSize.z - ray.origin.z) + (1 - stepZ) * ray.origin.z;
     ray.direction.z = stepZ * -ray.direction.z + (1 - stepZ) * ray.direction.z;
-    a |= int(stepZ * 1);
+    a |= int(stepZ * 4);
 
-//     if(ray.direction[0] < 0){
+// if (ray.direction[0] < 0){
 //     ray.origin[0] = octree->center[0] * 2 - ray.origin[0];//camera origin fix
 //     ray.direction[0] = - ray.direction[0];
 //     a |= 4 ; //bitwise OR (latest bits are XYZ)
