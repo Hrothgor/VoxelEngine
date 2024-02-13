@@ -55,7 +55,7 @@ vec3 CalculateNormals(vec3 hit, vec3 minBounds, vec3 maxBounds) {
 }
 
 
-#define SIZE 8.0
+#define SIZE 128.0
 
 float rand(float x){
     return fract(sin(x) * 43758.5453);
@@ -166,28 +166,29 @@ vec3 EfficientTraverseOctree(Ray ray)
     int a = 0;
     vec3 octreeSize = vec3(SIZE);
 
+    Ray positiveRay = ray;
     // fixes for rays with negative direction
     float stepX = 1 - step(0.0, ray.direction.x);
-    ray.origin.x = stepX * (octreeSize.x - ray.origin.x) + (1 - stepX) * ray.origin.x;
-    ray.direction.x = stepX * -ray.direction.x + (1 - stepX) * ray.direction.x;
+    positiveRay.origin.x = stepX * (octreeSize.x - ray.origin.x) + (1 - stepX) * ray.origin.x;
+    positiveRay.direction.x = stepX * -ray.direction.x + (1 - stepX) * ray.direction.x;
     a |= int(stepX * 1);
 
     float stepY = 1 - step(0.0, ray.direction.y);
-    ray.origin.y = stepY * (octreeSize.y - ray.origin.y) + (1 - stepY) * ray.origin.y;
-    ray.direction.y = stepY * -ray.direction.y + (1 - stepY) * ray.direction.y;
+    positiveRay.origin.y = stepY * (octreeSize.y - ray.origin.y) + (1 - stepY) * ray.origin.y;
+    positiveRay.direction.y = stepY * -ray.direction.y + (1 - stepY) * ray.direction.y;
     a |= int(stepY * 2);
 
     float stepZ = 1 - step(0.0, ray.direction.z);
-    ray.origin.z = stepZ * (octreeSize.z - ray.origin.z) + (1 - stepZ) * ray.origin.z;
-    ray.direction.z = stepZ * -ray.direction.z + (1 - stepZ) * ray.direction.z;
+    positiveRay.origin.z = stepZ * (octreeSize.z - ray.origin.z) + (1 - stepZ) * ray.origin.z;
+    positiveRay.direction.z = stepZ * -ray.direction.z + (1 - stepZ) * ray.direction.z;
     a |= int(stepZ * 4);
 
     vec3 color = vec3(0.0);
 
     vec3 t1, t2;
     float tMin, tMax;
-    if (!intersectRayAABB(ray, vec3(0.0), octreeSize, t1, t2, tMin, tMax))
-        return vec3(0.3, 0.5, 0.6);
+    if (!intersectRayAABB(positiveRay, vec3(0.0), octreeSize, t1, t2, tMin, tMax))
+        return vec3(0.0);
 
     int stackIndex = 0;
     stack[stackIndex++] = NodeInfo(0, vec3(0.0), 0, t1, t2, 0);
@@ -205,14 +206,14 @@ vec3 EfficientTraverseOctree(Ray ray)
         Node currentNode = SVO[current.index];
         // Branch
         if ((currentNode.data & (1 << 31)) == 0) {
-            color += vec3(0.1);
+            color += vec3(0.02);
 
             vec3 tm = 0.5 * (current.t1 + current.t2);
 
             int count = 0;
-            NodeInfo tmpStack[3]; // because we push back but here we want to push front
+            NodeInfo tmpStack[4]; // because we push back but here we want to push front
             int currentNodeIndex = entryNode(current.t1, tm);
-            while (currentNodeIndex > 0)
+            while (currentNodeIndex >= 0)
             {
                 switch (currentNodeIndex)
                 {
