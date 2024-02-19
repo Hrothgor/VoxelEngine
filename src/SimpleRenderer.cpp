@@ -10,7 +10,7 @@
 #define NEAR_PLANE 0.1
 #define FAR_PLANE 1000.0
 
-SimpleRenderer::SimpleRenderer()
+SimpleRenderer::SimpleRenderer(GLFWwindow* window)
 {
     glGenVertexArrays(1, &_EmptyVAO);
 
@@ -35,33 +35,38 @@ SimpleRenderer::SimpleRenderer()
     auto finish = std::chrono::high_resolution_clock::now();
     std::cout << "Time to build: " << std::chrono::duration_cast<std::chrono::duration<double, std::milli>>(finish - start).count() << "ms" << std::endl << std::endl;
 
+    _ImGuiLayer.Start(window);
 }
 
 SimpleRenderer::~SimpleRenderer()
 {
     _Shader.destroy();
+
+    _ImGuiLayer.End();
 }
 
 void SimpleRenderer::StartFrame()
 {
     glClearColor(1.00f, 0.49f, 0.04f, 1.00f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    _ImGuiLayer.BeginFrame();
 }
 
 void SimpleRenderer::EndFrame()
 {
+    _ImGuiLayer.EndFrame();
 }
 
 void SimpleRenderer::DrawFullScreenTriangle(const Camera &camera)
 {
+    _ImGuiLayer.ImGuiRender();
+
     _Shader.start();
-
     _Shader.loadTime(glfwGetTime());
-
     GLint ViewportSize[4];
     glGetIntegerv(GL_VIEWPORT, ViewportSize);
     _Shader.loadResolution(glm::vec2(ViewportSize[2], ViewportSize[3]));
-
     _Shader.loadCameraViewMatrix(camera.GetViewMatrix());
 
     glBindVertexArray(_EmptyVAO);

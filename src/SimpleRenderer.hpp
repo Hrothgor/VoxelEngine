@@ -6,10 +6,11 @@
 #include "Include.hpp"
 #include "Shader/StaticShader/StaticShader.hpp"
 #include "Camera.hpp"
+#include "ImGuiLayer.hpp"
 
 class SimpleRenderer {
 public:
-    SimpleRenderer();
+    SimpleRenderer(GLFWwindow* window);
     ~SimpleRenderer();
 
     void Init();
@@ -22,6 +23,8 @@ private:
     StaticShader _Shader;
     GLuint _EmptyVAO;
     GLuint _SSBO;
+
+    ImGuiLayer _ImGuiLayer;
 };
 
 
