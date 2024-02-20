@@ -10,11 +10,40 @@
 #define NEAR_PLANE 0.1
 #define FAR_PLANE 1000.0
 
-SimpleRenderer::SimpleRenderer(GLFWwindow* window)
+SimpleRenderer *SimpleRenderer::instance = nullptr;
+
+SimpleRenderer::SimpleRenderer()
+{
+}
+
+SimpleRenderer::~SimpleRenderer()
+{
+    _Shader.destroy();
+    _ImGuiLayer.End();
+}
+
+void SimpleRenderer::Init(GLFWwindow* window)
 {
     glGenVertexArrays(1, &_EmptyVAO);
 
-        auto start = std::chrono::high_resolution_clock::now();
+    //Create FrameBuffer and texture to render to it
+    glGenFramebuffers(1, &_FrameBuffer);
+    glBindFramebuffer(GL_FRAMEBUFFER, _FrameBuffer);
+
+    glGenTextures(1, &_Texture);
+    glBindTexture(GL_TEXTURE_2D, _Texture);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 1920, 1080, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glBindTexture(GL_TEXTURE_2D, 0);
+
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, _Texture, 0);
+
+    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+        std::cout << "ERROR::FRAMEBUFFER:: Framebuffer is not complete!" << std::endl;
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+    auto start = std::chrono::high_resolution_clock::now();
     {
         int size = 128;
         std::vector<float> noiseOutput(size * size);
@@ -38,29 +67,29 @@ SimpleRenderer::SimpleRenderer(GLFWwindow* window)
     _ImGuiLayer.Start(window);
 }
 
-SimpleRenderer::~SimpleRenderer()
-{
-    _Shader.destroy();
-
-    _ImGuiLayer.End();
-}
-
 void SimpleRenderer::StartFrame()
 {
-    glClearColor(1.00f, 0.49f, 0.04f, 1.00f);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    _ImGuiLayer.BeginFrame();
+
 }
 
 void SimpleRenderer::EndFrame()
 {
     _ImGuiLayer.EndFrame();
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
 void SimpleRenderer::DrawFullScreenTriangle(const Camera &camera)
 {
+    _ImGuiLayer.BeginFrame();
     _ImGuiLayer.ImGuiRender();
+    _ImGuiLayer.EndFrame();
+
+    glBindFramebuffer(GL_FRAMEBUFFER, _FrameBuffer);
+    glViewport(0, 0, 1920, 1080);
+
+    glClearColor(1.00f, 0.49f, 0.04f, 1.00f);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     _Shader.start();
     _Shader.loadTime(glfwGetTime());
@@ -74,4 +103,7 @@ void SimpleRenderer::DrawFullScreenTriangle(const Camera &camera)
     glBindVertexArray(0);
 
     _Shader.stop();
+
+
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }

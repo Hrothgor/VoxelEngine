@@ -46,7 +46,7 @@ int main()
 		return -1;
 	}
 
-    SimpleRenderer renderer(window);
+    SimpleRenderer::Get()->Init(window);
     Camera camera;
 
 	// render loop
@@ -63,9 +63,9 @@ int main()
 
 		// render
 		// ------
-        renderer.StartFrame();
-        renderer.DrawFullScreenTriangle(camera);
-        renderer.EndFrame();
+        SimpleRenderer::Get()->StartFrame();
+        SimpleRenderer::Get()->DrawFullScreenTriangle(camera);
+        SimpleRenderer::Get()->EndFrame();
 
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
 		// -------------------------------------------------------------------------------

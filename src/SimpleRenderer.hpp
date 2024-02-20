@@ -10,21 +10,35 @@
 
 class SimpleRenderer {
 public:
-    SimpleRenderer(GLFWwindow* window);
+    SimpleRenderer();
     ~SimpleRenderer();
 
-    void Init();
+    void Init(GLFWwindow* window);
 
     void StartFrame();
     void EndFrame();
     void DrawFullScreenTriangle(const Camera &camera);
 
+    GLuint _FrameBuffer;
+    GLuint _Texture;
 private:
     StaticShader _Shader;
     GLuint _EmptyVAO;
     GLuint _SSBO;
 
     ImGuiLayer _ImGuiLayer;
+
+// SINGLETON
+    protected:
+        static SimpleRenderer *instance;
+    public:
+        SimpleRenderer(SimpleRenderer &other) = delete;
+        void operator=(const SimpleRenderer &) = delete;
+        static SimpleRenderer *Get() {
+            if (instance == nullptr)
+                instance = new SimpleRenderer();
+            return instance;
+        };
 };
 
 
