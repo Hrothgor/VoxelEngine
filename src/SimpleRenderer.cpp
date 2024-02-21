@@ -3,12 +3,7 @@
 #include <math.h>
 #include <chrono>
 #include "SVO.hpp"
-
-#define WIDTH 800.0
-#define HEIGHT 600.0
-#define FOV 70.0
-#define NEAR_PLANE 0.1
-#define FAR_PLANE 1000.0
+#include "Engine.hpp"   
 
 SimpleRenderer *SimpleRenderer::instance = nullptr;
 
@@ -29,12 +24,13 @@ void SimpleRenderer::Init(GLFWwindow* window)
     //Create FrameBuffer and texture to render to it
     glGenFramebuffers(1, &_FrameBuffer);
     glBindFramebuffer(GL_FRAMEBUFFER, _FrameBuffer);
+    glViewport(0, 0, 1920, 1080);
 
     glGenTextures(1, &_Texture);
     glBindTexture(GL_TEXTURE_2D, _Texture);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 1920, 1080, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glBindTexture(GL_TEXTURE_2D, 0);
 
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, _Texture, 0);
@@ -45,7 +41,7 @@ void SimpleRenderer::Init(GLFWwindow* window)
 
     auto start = std::chrono::high_resolution_clock::now();
     {
-        int size = 64;
+        int size = 256;
         std::vector<float> noiseOutput(size * size);
 
         auto fnSimplex = FastNoise::New<FastNoise::Simplex>();
@@ -69,14 +65,10 @@ void SimpleRenderer::Init(GLFWwindow* window)
 
 void SimpleRenderer::StartFrame()
 {
-
-
 }
 
 void SimpleRenderer::EndFrame()
 {
-    _ImGuiLayer.EndFrame();
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
 void SimpleRenderer::DrawFullScreenTriangle(const Camera &camera)
@@ -86,7 +78,6 @@ void SimpleRenderer::DrawFullScreenTriangle(const Camera &camera)
     _ImGuiLayer.EndFrame();
 
     glBindFramebuffer(GL_FRAMEBUFFER, _FrameBuffer);
-    glViewport(0, 0, 1920, 1080);
 
     glClearColor(1.00f, 0.49f, 0.04f, 1.00f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -104,6 +95,7 @@ void SimpleRenderer::DrawFullScreenTriangle(const Camera &camera)
 
     _Shader.stop();
 
-
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+    std::cout << "FPS: " << Engine::Get()->GetFPS() << std::endl;
 }
