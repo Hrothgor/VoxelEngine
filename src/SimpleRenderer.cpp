@@ -42,7 +42,7 @@ void SimpleRenderer::Init(GLFWwindow* window)
 
     auto start = std::chrono::high_resolution_clock::now();
     {
-        int size = 256;
+        int size = 128;
         std::vector<float> noiseOutput(size * size);
 
         auto fnSimplex = FastNoise::New<FastNoise::Simplex>();
