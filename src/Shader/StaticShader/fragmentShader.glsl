@@ -17,7 +17,7 @@ struct NodeInfo {
     vec3 t1;
     vec3 t2;
     int a;
-} stack[128];
+} stack[64];
 
 in vec2 uv;
 
@@ -56,78 +56,6 @@ vec3 CalculateNormals(vec3 hit, vec3 minBounds, vec3 maxBounds) {
 
 #define SIZE 128.0
 
-float rand(float x){
-    return fract(sin(x) * 43758.5453);
-}
-
-// Traverse my SVO and find the closest intersection
-vec3 TraverseOctree(Ray ray)
-{
-    vec3 color = vec3(0.0);
-
-    int stackIndex = 0;
-    stack[stackIndex++] = NodeInfo(0, vec3(0.0), 0, vec3(0.0), vec3(0.0), 0);
-
-    float closestHit = 1000000.0;
-    NodeInfo closestNodeInfo = NodeInfo(-1, vec3(0.0), 0, vec3(0.0), vec3(0.0), 0);
-    int closestLod = 7;
-
-    while (stackIndex > 0)
-    {
-        NodeInfo currentInfo = stack[--stackIndex];
-
-        float mySize = SIZE / (1 << currentInfo.depth);
-        // Calculate my bounds from depth and root
-        vec3 minBounds = currentInfo.root;
-        vec3 maxBounds = currentInfo.root + vec3(mySize);
-
-        vec3 t1, t2;
-        float tMin, tMax;
-        if (!intersectRayAABB(ray, minBounds, maxBounds, t1, t2, tMin, tMax))
-            continue;
-
-        // LOD every 50 distance
-        vec3 center = minBounds + (maxBounds - minBounds) / 2.0;
-        float distance = length(center - ray.origin);
-        // int lod = 7 - int(distance / 50.0);
-        int lod = 7;
-
-        color += vec3(0.01, 0.0, 0.0);
-
-        Node currentNode = SVO[currentInfo.index];
-        if ((currentNode.data & (1 << 31)) == 0 && currentInfo.depth < lod)
-        {
-            stack[stackIndex++] = NodeInfo(currentNode.children[0], currentInfo.root, currentInfo.depth + 1, vec3(0.0), vec3(0.0), 0);
-            stack[stackIndex++] = NodeInfo(currentNode.children[1], vec3(currentInfo.root.x + mySize / 2.0, currentInfo.root.y, currentInfo.root.z), currentInfo.depth + 1, vec3(0.0), vec3(0.0), 0);
-            stack[stackIndex++] = NodeInfo(currentNode.children[2], vec3(currentInfo.root.x, currentInfo.root.y + mySize / 2.0, currentInfo.root.z), currentInfo.depth + 1, vec3(0.0), vec3(0.0), 0);
-            stack[stackIndex++] = NodeInfo(currentNode.children[3], vec3(currentInfo.root.x + mySize / 2.0, currentInfo.root.y + mySize / 2.0, currentInfo.root.z), currentInfo.depth + 1, vec3(0.0), vec3(0.0), 0);
-
-            stack[stackIndex++] = NodeInfo(currentNode.children[4], vec3(currentInfo.root.x, currentInfo.root.y, currentInfo.root.z + mySize / 2.0), currentInfo.depth + 1, vec3(0.0), vec3(0.0), 0);
-            stack[stackIndex++] = NodeInfo(currentNode.children[5], vec3(currentInfo.root.x + mySize / 2.0, currentInfo.root.y, currentInfo.root.z + mySize / 2.0), currentInfo.depth + 1, vec3(0.0), vec3(0.0), 0);
-            stack[stackIndex++] = NodeInfo(currentNode.children[6], vec3(currentInfo.root.x, currentInfo.root.y + mySize / 2.0, currentInfo.root.z + mySize / 2.0), currentInfo.depth + 1, vec3(0.0), vec3(0.0), 0);
-            stack[stackIndex++] = NodeInfo(currentNode.children[7], vec3(currentInfo.root.x + mySize / 2.0, currentInfo.root.y + mySize / 2.0, currentInfo.root.z + mySize / 2.0), currentInfo.depth + 1, vec3(0.0), vec3(0.0), 0);
-        } else {
-            if (tMin < closestHit && (currentNode.data & 1) != 0) {
-                closestHit = tMin;
-                closestNodeInfo = currentInfo;
-                closestLod = lod;
-            }
-        }
-    }
-
-    if (closestNodeInfo.index != -1) {
-        // return vec3(rand(closestLod*8), rand(closestLod+5), rand(closestLod+8));
-        return abs(CalculateNormals(ray.origin + ray.direction * closestHit, closestNodeInfo.root, closestNodeInfo.root + vec3(SIZE / (1 << closestNodeInfo.depth))));
-    }
-    else 
-        return color;
-}
-
-
-
-
-
-
 int entryNode(vec3 t1, vec3 tm) {
     int answer = 0;
     // select the entry plane and set bits
@@ -150,14 +78,11 @@ int entryNode(vec3 t1, vec3 tm) {
 }
 
 int nextNode(vec3 t, int x, int y, int z) {
-    if (t.x < t.y) {
-        if (t.x < t.z) 
-            return x;  // YZ plane because t.x is minimum
-    }
-    else if (t.y < t.z) {
-        return y; // XZ plane because t.y is minimum
-    }
-    return z; // XY plane because t.z is minimum
+    return int(
+        x * step(t.x, min(t.y, t.z)) +
+        y * step(t.y, min(t.z, t.x)) +
+        z * step(t.z, min(t.x, t.y))
+    );
 }
 
 vec3 EfficientTraverseOctree(Ray ray)
@@ -166,17 +91,15 @@ vec3 EfficientTraverseOctree(Ray ray)
     vec3 octreeSize = vec3(SIZE);
 
     Ray positiveRay = ray;
-    // fixes for rays with negative direction
+    //fixes for rays with negative direction
     float stepX = 1 - step(0.0, ray.direction.x);
     positiveRay.origin.x = stepX * (octreeSize.x - ray.origin.x) + (1 - stepX) * ray.origin.x;
     positiveRay.direction.x = stepX * -ray.direction.x + (1 - stepX) * ray.direction.x;
     a |= int(stepX * 1);
-
     float stepY = 1 - step(0.0, ray.direction.y);
     positiveRay.origin.y = stepY * (octreeSize.y - ray.origin.y) + (1 - stepY) * ray.origin.y;
     positiveRay.direction.y = stepY * -ray.direction.y + (1 - stepY) * ray.direction.y;
     a |= int(stepY * 2);
-
     float stepZ = 1 - step(0.0, ray.direction.z);
     positiveRay.origin.z = stepZ * (octreeSize.z - ray.origin.z) + (1 - stepZ) * ray.origin.z;
     positiveRay.direction.z = stepZ * -ray.direction.z + (1 - stepZ) * ray.direction.z;
@@ -195,8 +118,6 @@ vec3 EfficientTraverseOctree(Ray ray)
     while (stackIndex > 0)
     {
         NodeInfo current = stack[--stackIndex];
-
-        if (current.t2.x < 0 || current.t2.y < 0 || current.t2.z < 0) continue;
 
         float mySize = SIZE / (1 << current.depth);
         vec3 minBounds = vec3(current.root.x + mySize * (current.a & 1), current.root.y + mySize * ((current.a & 2) >> 1), current.root.z + mySize * ((current.a & 4) >> 2));
@@ -286,12 +207,10 @@ void main()
 	float fov = radians(70.0);
 	float fx = tan(fov / 2.0) / iResolution.x;
 	vec2 d = fx * (fragCoord.xy * 2.0 - iResolution.xy);
-
     // Initial camera direction (z-axis)
 	vec3 camDir = normalize(vec3(d.x, d.y, 1.0));
     // Apply view matrix to camDir
     camDir = (iViewMatrix * vec4(camDir, 0.0)).xyz;
-
     // get pos from view matrix
     vec3 camPos = (iViewMatrix * vec4(0.0, 0.0, 0.0, 1.0)).xyz;
 
@@ -306,6 +225,72 @@ void main()
 
 
 
+// float rand(float x){
+//     return fract(sin(x) * 43758.5453);
+// }
+
+// // Traverse my SVO and find the closest intersection
+// vec3 TraverseOctree(Ray ray)
+// {
+//     vec3 color = vec3(0.0);
+
+//     int stackIndex = 0;
+//     stack[stackIndex++] = NodeInfo(0, vec3(0.0), 0, vec3(0.0), vec3(0.0), 0);
+
+//     float closestHit = 1000000.0;
+//     NodeInfo closestNodeInfo = NodeInfo(-1, vec3(0.0), 0, vec3(0.0), vec3(0.0), 0);
+//     int closestLod = 7;
+
+//     while (stackIndex > 0)
+//     {
+//         NodeInfo currentInfo = stack[--stackIndex];
+
+//         float mySize = SIZE / (1 << currentInfo.depth);
+//         // Calculate my bounds from depth and root
+//         vec3 minBounds = currentInfo.root;
+//         vec3 maxBounds = currentInfo.root + vec3(mySize);
+
+//         vec3 t1, t2;
+//         float tMin, tMax;
+//         if (!intersectRayAABB(ray, minBounds, maxBounds, t1, t2, tMin, tMax))
+//             continue;
+
+//         // LOD every 50 distance
+//         vec3 center = minBounds + (maxBounds - minBounds) / 2.0;
+//         float distance = length(center - ray.origin);
+//         // int lod = 7 - int(distance / 50.0);
+//         int lod = 7;
+
+//         color += vec3(0.01, 0.0, 0.0);
+
+//         Node currentNode = SVO[currentInfo.index];
+//         if ((currentNode.data & (1 << 31)) == 0 && currentInfo.depth < lod)
+//         {
+//             stack[stackIndex++] = NodeInfo(currentNode.children[0], currentInfo.root, currentInfo.depth + 1, vec3(0.0), vec3(0.0), 0);
+//             stack[stackIndex++] = NodeInfo(currentNode.children[1], vec3(currentInfo.root.x + mySize / 2.0, currentInfo.root.y, currentInfo.root.z), currentInfo.depth + 1, vec3(0.0), vec3(0.0), 0);
+//             stack[stackIndex++] = NodeInfo(currentNode.children[2], vec3(currentInfo.root.x, currentInfo.root.y + mySize / 2.0, currentInfo.root.z), currentInfo.depth + 1, vec3(0.0), vec3(0.0), 0);
+//             stack[stackIndex++] = NodeInfo(currentNode.children[3], vec3(currentInfo.root.x + mySize / 2.0, currentInfo.root.y + mySize / 2.0, currentInfo.root.z), currentInfo.depth + 1, vec3(0.0), vec3(0.0), 0);
+
+//             stack[stackIndex++] = NodeInfo(currentNode.children[4], vec3(currentInfo.root.x, currentInfo.root.y, currentInfo.root.z + mySize / 2.0), currentInfo.depth + 1, vec3(0.0), vec3(0.0), 0);
+//             stack[stackIndex++] = NodeInfo(currentNode.children[5], vec3(currentInfo.root.x + mySize / 2.0, currentInfo.root.y, currentInfo.root.z + mySize / 2.0), currentInfo.depth + 1, vec3(0.0), vec3(0.0), 0);
+//             stack[stackIndex++] = NodeInfo(currentNode.children[6], vec3(currentInfo.root.x, currentInfo.root.y + mySize / 2.0, currentInfo.root.z + mySize / 2.0), currentInfo.depth + 1, vec3(0.0), vec3(0.0), 0);
+//             stack[stackIndex++] = NodeInfo(currentNode.children[7], vec3(currentInfo.root.x + mySize / 2.0, currentInfo.root.y + mySize / 2.0, currentInfo.root.z + mySize / 2.0), currentInfo.depth + 1, vec3(0.0), vec3(0.0), 0);
+//         } else {
+//             if (tMin < closestHit && (currentNode.data & 1) != 0) {
+//                 closestHit = tMin;
+//                 closestNodeInfo = currentInfo;
+//                 closestLod = lod;
+//             }
+//         }
+//     }
+
+//     if (closestNodeInfo.index != -1) {
+//         // return vec3(rand(closestLod*8), rand(closestLod+5), rand(closestLod+8));
+//         return abs(CalculateNormals(ray.origin + ray.direction * closestHit, closestNodeInfo.root, closestNodeInfo.root + vec3(SIZE / (1 << closestNodeInfo.depth))));
+//     }
+//     else 
+//         return color;
+// }
 
 
 // // void proc_subtree (double tx0, double ty0, double tz0, double tx1, double ty1, double tz1, Node* node){
