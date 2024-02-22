@@ -1,35 +1,35 @@
 #include "ShaderProgram.hpp"
 #include <fstream>
 #include <iostream>
+#include "Logger.hpp"
 
-ShaderProgram::ShaderProgram(std::string vertexFile, std::string fragmentFile)
+ShaderProgram::ShaderProgram(const std::string &vertexFile, const std::string &fragmentFile)
 {
-    _vertexShaderID = loadShader(vertexFile, GL_VERTEX_SHADER);
-    _fragmentShaderID = loadShader(fragmentFile, GL_FRAGMENT_SHADER);
-    _programID = glCreateProgram();
-    glAttachShader(_programID, _vertexShaderID);
-    glAttachShader(_programID, _fragmentShaderID);
-    glLinkProgram(_programID);
-    glValidateProgram(_programID);
+    _vertexFile = vertexFile;
+    _fragmentFile = fragmentFile;
+
+    _vertexShaderID = LoadShader(_vertexFile, GL_VERTEX_SHADER);
+    _fragmentShaderID = LoadShader(_fragmentFile, GL_FRAGMENT_SHADER);
+    _programID = LinkProgram(_vertexShaderID, _fragmentShaderID);
 }
 
 ShaderProgram::~ShaderProgram()
 {
 }
 
-void ShaderProgram::start() const
+void ShaderProgram::Start() const
 {
     glUseProgram(_programID);
 }
 
-void ShaderProgram::stop() const
+void ShaderProgram::Stop() const
 {
     glUseProgram(0);
 }
 
-void ShaderProgram::destroy() const
+void ShaderProgram::Destroy() const
 {
-    stop();
+    Stop();
     glDetachShader(_programID, _vertexShaderID);
     glDetachShader(_programID, _fragmentShaderID);
     glDeleteShader(_vertexShaderID);
@@ -37,55 +37,106 @@ void ShaderProgram::destroy() const
     glDeleteProgram(_programID);
 }
 
-int ShaderProgram::loadShader(const std::string &file, unsigned int type) const
+int ShaderProgram::LoadShader(const std::string &file, unsigned int type) const
 {
     std::ifstream fs(file);
 
     if (!fs.is_open()) {
-        std::cout << "Couldn't open " << file << " shader file" << std::endl;
-        exit(84);
+        Logger::Get()->Log(Logger::LogType::ERROR, "Couldn't open %s shader file", file.c_str());
+        return (0);
     }
     std::string source((std::istreambuf_iterator<char>(fs)), std::istreambuf_iterator<char>());
     const GLchar *const src = source.c_str();
     GLuint shaderID = glCreateShader(type);
     glShaderSource(shaderID, 1, &src, NULL);
     glCompileShader(shaderID);
-    GLint succes;
-    glGetShaderiv(shaderID, GL_COMPILE_STATUS, &succes);
+
+    GLint success;
+    glGetShaderiv(shaderID, GL_COMPILE_STATUS, &success);
     GLchar infolog[512];
-    if (!succes) {
+    if (!success) {
         glGetShaderInfoLog(shaderID, 512, NULL, infolog);
-        std::cout << "Could not compile shader : " << file << " : " << infolog << std::endl;
+        Logger::Get()->Log(Logger::LogType::ERROR, "Could not compile shader : %s", file.c_str());
+        Logger::Get()->Log(Logger::LogType::ERROR, "\t%s", infolog);
+        return (0);
     }
     return (shaderID);
 }
 
-void ShaderProgram::bindAttribute(int attribute, const std::string &name) const
+int ShaderProgram::LinkProgram(int vertexShaderID, int fragmentShaderID) const
+{
+    if (vertexShaderID == 0 || fragmentShaderID == 0) {
+        Logger::Get()->Log(Logger::LogType::ERROR, "Can't link shader program, one of the shader is invalid");
+        return (0);
+    }
+    
+    GLuint programID = glCreateProgram();
+    glAttachShader(programID, vertexShaderID);
+    glAttachShader(programID, fragmentShaderID);
+    glLinkProgram(programID);
+    glValidateProgram(programID);
+
+    GLint success;
+    glGetProgramiv(programID, GL_LINK_STATUS, &success);
+    GLchar infolog[512];
+    if (!success) {
+        glGetProgramInfoLog(programID, 512, NULL, infolog);
+        Logger::Get()->Log(Logger::LogType::ERROR, "Could not validate shader program");
+        Logger::Get()->Log(Logger::LogType::ERROR, "\t%s", infolog);
+        return (0);
+    }
+    return (programID);
+}
+
+void ShaderProgram::Reload()
+{
+    GLuint vertexShaderID = LoadShader(_vertexFile, GL_VERTEX_SHADER);
+    GLuint fragmentShaderID = LoadShader(_fragmentFile, GL_FRAGMENT_SHADER);
+    if (vertexShaderID == 0 || fragmentShaderID == 0) {
+        Logger::Get()->Log(Logger::LogType::WARNING, "Couldn't reload shader");
+        return;
+    }
+
+    GLuint programID = LinkProgram(vertexShaderID, fragmentShaderID);
+    if (programID == 0)
+    {
+        Logger::Get()->Log(Logger::LogType::WARNING, "Couldn't reload shader");
+        return;
+    }
+
+    Stop();
+    _vertexShaderID = vertexShaderID;
+    _fragmentShaderID = fragmentShaderID;
+    _programID = programID;
+    Logger::Get()->Log(Logger::LogType::SUCCESS, "Shader reloaded");
+}
+
+void ShaderProgram::BindAttribute(int attribute, const std::string &name) const
 {
     glBindAttribLocation(_programID, attribute, name.c_str());
 }
 
-int ShaderProgram::getUniformLocation(const std::string &uniformName)
+int ShaderProgram::GetUniformLocation(const std::string &uniformName)
 {
     return (glGetUniformLocation(_programID, uniformName.c_str()));
 }
 
-void ShaderProgram::loadFloat(int location, float value)
+void ShaderProgram::LoadFloat(int location, float value)
 {
     glUniform1f(location, value);
 }
 
-void ShaderProgram::loadVector2(int location,const glm::vec2 &value)
+void ShaderProgram::LoadVector2(int location,const glm::vec2 &value)
 {
     glUniform2f(location, value.x, value.y);
 }
 
-void ShaderProgram::loadVector3(int location, const glm::vec3 &value)
+void ShaderProgram::LoadVector3(int location, const glm::vec3 &value)
 {
     glUniform3f(location, value.x, value.y, value.z);
 }
 
-void ShaderProgram::loadBool(int location, bool value)
+void ShaderProgram::LoadBool(int location, bool value)
 {
     if (value == true)
         glUniform1f(location, 1);
@@ -93,7 +144,7 @@ void ShaderProgram::loadBool(int location, bool value)
         glUniform1f(location, 0);
 }
 
-void ShaderProgram::loadMatrix(int location, const glm::mat4 &value)
+void ShaderProgram::LoadMatrix(int location, const glm::mat4 &value)
 {
     glUniformMatrix4fv(location, 1, false, &value[0][0]);
 }

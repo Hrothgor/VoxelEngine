@@ -1,6 +1,7 @@
 #include "SVO.hpp"
 #include <GLFW/glfw3.h>
 #include <iostream>
+#include "Logger.hpp"
 
 SVO::SVO(uint16_t depth)
 {
@@ -18,11 +19,13 @@ void SVO::Build(const std::vector<float>& heightMap)
 
 	Build_Internal(heightMap, 0, 0, 0, 0);
 
-	std::cout << "Depth: " << _Depth << std::endl;
-	std::cout << "Size: " << _Size << std::endl;
-	std::cout << "Max size: " << _Size * _Size * _Size << std::endl;
-	std::cout << "Octree size: " << _Octree.size() << std::endl;
-	std::cout << "Octree size in bytes: " << _Octree.size() * sizeof(Node) / 1024 << " KB" << " ---- " << _Octree.size() * sizeof(Node) / 1024 / 1024 << " MB" << std::endl;
+	Logger::Get()->Log(Logger::INFO, "SVO built --------");
+	Logger::Get()->Log(Logger::INFO, "\tDepth: %d", _Depth);
+	Logger::Get()->Log(Logger::INFO, "\tSize: %d", _Size);
+	Logger::Get()->Log(Logger::INFO, "\tMax size: %d", _Size * _Size * _Size);
+	Logger::Get()->Log(Logger::INFO, "\tOctree size: %d", _Octree.size());
+	Logger::Get()->Log(Logger::INFO, "\tOctree memory size (KB): %d KB", _Octree.size() * sizeof(Node) / 1024);
+	Logger::Get()->Log(Logger::INFO, "\tOctree memory size (MB): %d MB", _Octree.size() * sizeof(Node) / 1024 / 1024);
 }
 
 // heightMap is a 2D array of size _Size * _Size

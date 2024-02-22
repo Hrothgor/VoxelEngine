@@ -7,25 +7,31 @@
 
 class ShaderProgram {
     public:
-        ShaderProgram(std::string vertexFile, std::string fragmentFile);
+        ShaderProgram(const std::string &vertexFile, const std::string &fragmentFile);
         ~ShaderProgram();
 
-        void start() const;
-        void stop() const;
-        void destroy() const;
-        int loadShader(const std::string &file, unsigned int type) const;
-        void bindAttribute(int attribute, const std::string &name) const;
+        void Start() const;
+        void Stop() const;
+        void Destroy() const;
 
-        int getUniformLocation(const std::string &uniformName);
-        virtual void getAllUniformLocation() = 0;
-        void loadFloat(int location, float value);
-        void loadBool(int location, bool value);
-        void loadVector2(int location, const glm::vec2 &value);
-        void loadVector3(int location, const glm::vec3 &value);
-        void loadMatrix(int location, const glm::mat4 &value);
-
+        void Reload();
     protected:
+        int LoadShader(const std::string &file, unsigned int type) const;
+        int LinkProgram(int vertexShaderID, int fragmentShaderID) const;
+        void BindAttribute(int attribute, const std::string &name) const;
+
+        int GetUniformLocation(const std::string &uniformName);
+        virtual void GetAllUniformLocation() = 0;
+        void LoadFloat(int location, float value);
+        void LoadBool(int location, bool value);
+        void LoadVector2(int location, const glm::vec2 &value);
+        void LoadVector3(int location, const glm::vec3 &value);
+        void LoadMatrix(int location, const glm::mat4 &value);
+
     private:
+        std::string _vertexFile;
+        std::string _fragmentFile;
+
         int _programID;
         int _vertexShaderID;
         int _fragmentShaderID;

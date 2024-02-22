@@ -9,32 +9,32 @@
 
 StaticShader::StaticShader() : ShaderProgram("src/Shader/StaticShader/vertexShader.glsl", "src/Shader/StaticShader/fragmentShader.glsl")
 {
-    getAllUniformLocation();
+    GetAllUniformLocation();
 }
 
 StaticShader::~StaticShader()
 {
 }
 
-void StaticShader::getAllUniformLocation()
+void StaticShader::GetAllUniformLocation()
 {
-    loc_Time = getUniformLocation("iTime");
-    loc_Resolution = getUniformLocation("iResolution");
+    loc_Time = GetUniformLocation("iTime");
+    loc_Resolution = GetUniformLocation("iResolution");
 
-    loc_cameraViewMatrix = getUniformLocation("iViewMatrix");
+    loc_cameraViewMatrix = GetUniformLocation("iViewMatrix");
 }
 
-void StaticShader::loadTime(float time)
+void StaticShader::LoadTime(float time)
 {
-    loadFloat(loc_Time, time);
+    LoadFloat(loc_Time, time);
 }
 
-void StaticShader::loadResolution(const glm::vec2 &resolution)
+void StaticShader::LoadResolution(const glm::vec2 &resolution)
 {
-    loadVector2(loc_Resolution, resolution);
+    LoadVector2(loc_Resolution, resolution);
 }
 
-void StaticShader::loadCameraViewMatrix(const glm::mat4 &viewMatrix)
+void StaticShader::LoadCameraViewMatrix(const glm::mat4 &viewMatrix)
 {
-    loadMatrix(loc_cameraViewMatrix, viewMatrix);
+    LoadMatrix(loc_cameraViewMatrix, viewMatrix);
 }

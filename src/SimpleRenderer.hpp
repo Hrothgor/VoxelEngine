@@ -21,8 +21,8 @@ public:
 
     GLuint _FrameBuffer;
     GLuint _Texture;
-private:
     StaticShader _Shader;
+private:
     GLuint _EmptyVAO;
     GLuint _SSBO;
 

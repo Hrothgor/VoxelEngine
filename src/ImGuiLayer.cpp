@@ -1,11 +1,14 @@
 #include "ImGuiLayer.hpp"
+
 #include "DebugPanel.hpp"
 #include "ViewportPanel.hpp"
+#include "LogPanel.hpp"
 
 ImGuiLayer::ImGuiLayer()
 {
 	_panels.push_back(std::make_unique<DebugPanel>());
 	_panels.push_back(std::make_unique<ViewportPanel>());
+	_panels.push_back(std::make_unique<LogPanel>());
 }
 
 ImGuiLayer::~ImGuiLayer()

@@ -11,14 +11,13 @@ class StaticShader : public ShaderProgram {
         StaticShader();
         ~StaticShader();
 
-        void getAllUniformLocation();
-
-        void loadTime(float time);
-        void loadResolution(const glm::vec2 &resolution);
-
-        void loadCameraViewMatrix(const glm::mat4 &viewMatrix);
+        void LoadTime(float time);
+        void LoadResolution(const glm::vec2 &resolution);
+        void LoadCameraViewMatrix(const glm::mat4 &viewMatrix);
  
     protected:
+        void GetAllUniformLocation();
+
     private:
         int loc_Time;
         int loc_Resolution;

@@ -1,14 +1,5 @@
 #version 430 core
 
-in vec2 uv;
-
-uniform float iTime;
-uniform vec2 iResolution;
-
-uniform mat4 iViewMatrix;
-
-out vec4 out_Pixel;
-
 struct Ray {
     vec3 origin;
     vec3 direction;
@@ -27,6 +18,14 @@ struct NodeInfo {
     vec3 t2;
     int a;
 } stack[128];
+
+in vec2 uv;
+
+uniform float iTime;
+uniform vec2 iResolution;
+uniform mat4 iViewMatrix;
+
+out vec4 out_Pixel;
 
 layout(std430, binding = 0) readonly buffer SSBO
 {
