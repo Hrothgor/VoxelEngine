@@ -53,28 +53,15 @@ vec3 CalculateNormals(vec3 hit, vec3 minBounds, vec3 maxBounds) {
     return normalize(normal);
 }
 
-
-#define SIZE 128.0
+#define SIZE 512.0
 
 int entryNode(vec3 t1, vec3 tm) {
-    int answer = 0;
-    // select the entry plane and set bits
-    if (t1.x > t1.y) {
-        if(t1.x > t1.z) { // PLANE YZ because t1.x is maximum
-            if (tm.y < t1.x) answer |= 2; // set bit at position 1
-            if (tm.z < t1.x) answer |= 4; // set bit at position 2
-            return answer;
-        }
-    }
-    else if (t1.y > t1.z) { // PLANE XZ because t1.y is maximum
-        if (tm.x < t1.y) answer |= 1; // set bit at position 0
-        if (tm.z < t1.y) answer |= 4; // set bit at position 2
-        return answer;
-    }
-    // PLANE XY because t1.z is maximum
-    if (tm.x < t1.z) answer |= 1; // set bit at position 0
-    if (tm.y < t1.z) answer |= 2; // set bit at position 1
-    return answer;
+    float Ax = 2.0 * step(tm.y, t1.x) + 4.0 * step(tm.z, t1.x);
+    float Ay = 1.0 * step(tm.x, t1.y) + 4.0 * step(tm.z, t1.y);
+    float Az = 1.0 * step(tm.x, t1.z) + 2.0 * step(tm.y, t1.z);
+    return int (
+        mix(mix(Az, Ay, step(t1.z, t1.y)), Ax, step(t1.y, t1.x) * step(t1.z, t1.x))
+    );
 }
 
 int nextNode(vec3 t, int x, int y, int z) {
@@ -83,7 +70,7 @@ int nextNode(vec3 t, int x, int y, int z) {
     );
 }
 
-vec3 EfficientTraverseOctree(Ray ray)
+vec3 TraverseOctree(Ray ray)
 {
     int a = 0;
     vec3 octreeSize = vec3(SIZE);
@@ -121,10 +108,15 @@ vec3 EfficientTraverseOctree(Ray ray)
         vec3 minBounds = vec3(current.root.x + mySize * (current.a & 1), current.root.y + mySize * ((current.a & 2) >> 1), current.root.z + mySize * ((current.a & 4) >> 2));
         vec3 maxBounds = minBounds + vec3(mySize);
 
+        // one LOD level every 100 distance
+        vec3 center = minBounds + (maxBounds - minBounds) / 2.0;
+        float distance = length(center - ray.origin);
+        int lod = 9 - int(distance / 100.0);
+
         Node currentNode = SVO[current.index];
         // Branch
-        if ((currentNode.data & (1 << 31)) == 0) {
-            color += vec3(0.04);
+        if ((currentNode.data & (1 << 31)) == 0 && current.depth < lod) {
+            color += vec3(0.02, 0.0, 0.0);
 
             vec3 tm = 0.5 * (current.t1 + current.t2);
 
@@ -185,7 +177,6 @@ vec3 EfficientTraverseOctree(Ray ray)
             return abs(CalculateNormals(ray.origin + ray.direction * tClosest, minBounds, maxBounds));
         }
     }
-
     return color;
 }
 
@@ -207,145 +198,6 @@ void main()
 	Ray cameraRay = Ray(camPos, camDir);
 
 	//final color
-    vec3 color = EfficientTraverseOctree(cameraRay);
+    vec3 color = TraverseOctree(cameraRay);
 	out_Pixel = vec4(color, 1.0);
 }
-
-
-
-
-
-// float rand(float x){
-//     return fract(sin(x) * 43758.5453);
-// }
-
-// // Traverse my SVO and find the closest intersection
-// vec3 TraverseOctree(Ray ray)
-// {
-//     vec3 color = vec3(0.0);
-
-//     int stackIndex = 0;
-//     stack[stackIndex++] = NodeInfo(0, vec3(0.0), 0, vec3(0.0), vec3(0.0), 0);
-
-//     float closestHit = 1000000.0;
-//     NodeInfo closestNodeInfo = NodeInfo(-1, vec3(0.0), 0, vec3(0.0), vec3(0.0), 0);
-//     int closestLod = 7;
-
-//     while (stackIndex > 0)
-//     {
-//         NodeInfo currentInfo = stack[--stackIndex];
-
-//         float mySize = SIZE / (1 << currentInfo.depth);
-//         // Calculate my bounds from depth and root
-//         vec3 minBounds = currentInfo.root;
-//         vec3 maxBounds = currentInfo.root + vec3(mySize);
-
-//         vec3 t1, t2;
-//         float tMin, tMax;
-//         if (!intersectRayAABB(ray, minBounds, maxBounds, t1, t2, tMin, tMax))
-//             continue;
-
-//         // LOD every 50 distance
-//         vec3 center = minBounds + (maxBounds - minBounds) / 2.0;
-//         float distance = length(center - ray.origin);
-//         // int lod = 7 - int(distance / 50.0);
-//         int lod = 7;
-
-//         color += vec3(0.01, 0.0, 0.0);
-
-//         Node currentNode = SVO[currentInfo.index];
-//         if ((currentNode.data & (1 << 31)) == 0 && currentInfo.depth < lod)
-//         {
-//             stack[stackIndex++] = NodeInfo(currentNode.children[0], currentInfo.root, currentInfo.depth + 1, vec3(0.0), vec3(0.0), 0);
-//             stack[stackIndex++] = NodeInfo(currentNode.children[1], vec3(currentInfo.root.x + mySize / 2.0, currentInfo.root.y, currentInfo.root.z), currentInfo.depth + 1, vec3(0.0), vec3(0.0), 0);
-//             stack[stackIndex++] = NodeInfo(currentNode.children[2], vec3(currentInfo.root.x, currentInfo.root.y + mySize / 2.0, currentInfo.root.z), currentInfo.depth + 1, vec3(0.0), vec3(0.0), 0);
-//             stack[stackIndex++] = NodeInfo(currentNode.children[3], vec3(currentInfo.root.x + mySize / 2.0, currentInfo.root.y + mySize / 2.0, currentInfo.root.z), currentInfo.depth + 1, vec3(0.0), vec3(0.0), 0);
-
-//             stack[stackIndex++] = NodeInfo(currentNode.children[4], vec3(currentInfo.root.x, currentInfo.root.y, currentInfo.root.z + mySize / 2.0), currentInfo.depth + 1, vec3(0.0), vec3(0.0), 0);
-//             stack[stackIndex++] = NodeInfo(currentNode.children[5], vec3(currentInfo.root.x + mySize / 2.0, currentInfo.root.y, currentInfo.root.z + mySize / 2.0), currentInfo.depth + 1, vec3(0.0), vec3(0.0), 0);
-//             stack[stackIndex++] = NodeInfo(currentNode.children[6], vec3(currentInfo.root.x, currentInfo.root.y + mySize / 2.0, currentInfo.root.z + mySize / 2.0), currentInfo.depth + 1, vec3(0.0), vec3(0.0), 0);
-//             stack[stackIndex++] = NodeInfo(currentNode.children[7], vec3(currentInfo.root.x + mySize / 2.0, currentInfo.root.y + mySize / 2.0, currentInfo.root.z + mySize / 2.0), currentInfo.depth + 1, vec3(0.0), vec3(0.0), 0);
-//         } else {
-//             if (tMin < closestHit && (currentNode.data & 1) != 0) {
-//                 closestHit = tMin;
-//                 closestNodeInfo = currentInfo;
-//                 closestLod = lod;
-//             }
-//         }
-//     }
-
-//     if (closestNodeInfo.index != -1) {
-//         // return vec3(rand(closestLod*8), rand(closestLod+5), rand(closestLod+8));
-//         return abs(CalculateNormals(ray.origin + ray.direction * closestHit, closestNodeInfo.root, closestNodeInfo.root + vec3(SIZE / (1 << closestNodeInfo.depth))));
-//     }
-//     else 
-//         return color;
-// }
-
-
-// // void proc_subtree (double tx0, double ty0, double tz0, double tx1, double ty1, double tz1, Node* node){
-// //     float txm, tym, tzm;
-
-// void proc_subtree(vec3 t1, vec3 t2, NodeInfo nodeInfo) {
-
-//     if (t2.x < 0 || t2.y < 0 || t2.z < 0) return;
-//     // if (any(lessThan(tMax, vec3(0.0)))) return;
-    
-
-
-//     if (nodeInfo->IsLEAF){
-//         return;
-//     }
-
-//     vec3 tm = (t1 + t2) * 0.5;
-//     // txm = 0.5*(tx0 + tx1);
-//     // tym = 0.5*(ty0 + ty1);
-//     // tzm = 0.5*(tz0 + tz1);
-
-//     int currentNodeIndex = entryNode(t1.x, t1.y, t1.z, tm.x,tm.y,tm.z);
-//     do{
-//         switch (currentNodeIndex)
-//         {
-//         case 0: { 
-//             proc_subtree(tx0,ty0,tz0,txm,tym,tzm,node->children[a]);
-//             // currentNodeIndex = new_node(txm,4,tym,2,tzm,1);
-//             currentNodeIndex = nextNode(vec3(tm.x, tm.y, tm.z), 1, 2, 4);
-//             break;}
-//         case 1: { 
-//             proc_subtree(tx0,ty0,tzm,txm,tym,tz1,node->children[1^a]);
-//             // currentNodeIndex = new_node(txm,5,tym,3,tz1,8);
-//             currentNodeIndex = nextNode(vec3(t2.x, tm.y, tm.z), -1, 3, 5);
-//             break;}
-//         case 2: { 
-//             proc_subtree(tx0,tym,tz0,txm,ty1,tzm,node->children[2^a]);
-//             // currentNodeIndex = new_node(txm,6,ty1,8,tzm,3);
-//             currentNodeIndex = nextNode(vec3(tm.x, t2.y, tm.z), 3, -1, 6);
-//             break;}
-//         case 3: { 
-//             proc_subtree(tx0,tym,tzm,txm,ty1,tz1,node->children[3^a]);
-//             // currentNodeIndex = new_node(txm,7,ty1,8,tz1,8);
-//             currentNodeIndex = nextNode(vec3(t2.x, t2.y, tm.z), -1, -1, 7);
-//             break;}
-//         case 4: { 
-//             proc_subtree(txm,ty0,tz0,tx1,tym,tzm,node->children[4^a]);
-//             // currentNodeIndex = new_node(tx1,8,tym,6,tzm,5);
-//             currentNodeIndex = nextNode(vec3(tm.x, tm.y, t2.z), 5, 6, -1);
-//             break;}
-//         case 5: { 
-//             proc_subtree(txm,ty0,tzm,tx1,tym,tz1,node->children[5^a]);
-//             // currentNodeIndex = new_node(tx1,8,tym,7,tz1,8);
-//             currentNodeIndex = nextNode(vec3(t2.x, tm.y, t2.z), -1, 7, -1);
-//             break;}
-//         case 6: { 
-//             proc_subtree(txm,tym,tz0,tx1,ty1,tzm,node->children[6^a]);
-//             // currentNodeIndex = new_node(tx1,8,ty1,8,tzm,7);
-//             currentNodeIndex = nextNode(vec3(tm.x, t2.y, t2.z), 7, -1, -1);
-//             break;}
-//         case 7: { 
-//             proc_subtree(txm,tym,tzm,tx1,ty1,tz1,node->children[7^a]);
-//             // currentNodeIndex = 8;
-//             currentNodeIndex = -1;
-//             break;}
-//         }
-//     } while (currentNodeIndex>0);
-// }
