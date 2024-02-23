@@ -12,11 +12,11 @@ struct Node {
 
 struct NodeInfo {
     int index;
+    int childIdx;
     vec3 root;
     int depth;
     vec3 t1;
     vec3 t2;
-    int a;
 } stack[64];
 
 in vec2 uv;
@@ -70,27 +70,31 @@ int nextNode(vec3 t, int x, int y, int z) {
     );
 }
 
-vec3 TraverseOctree(Ray ray)
-{
-    int a = 0;
-    vec3 octreeSize = vec3(SIZE);
-
-    Ray positiveRay = ray;
-    //fixes for rays with negative direction
+void fixRayNegative(Ray ray, out Ray positiveRay, out int a) {
     float stepX = 1 - step(0.0, ray.direction.x);
-    positiveRay.origin.x = mix(ray.origin.x, octreeSize.x - ray.origin.x, stepX);
+    positiveRay.origin.x = mix(ray.origin.x, SIZE - ray.origin.x, stepX);
     positiveRay.direction.x = mix(ray.direction.x, -ray.direction.x, stepX);
     a |= int(stepX * 1);
+    
     float stepY = 1 - step(0.0, ray.direction.y);
-    positiveRay.origin.y = mix(ray.origin.y, octreeSize.y - ray.origin.y, stepY);
+    positiveRay.origin.y = mix(ray.origin.y, SIZE - ray.origin.y, stepY);
     positiveRay.direction.y = mix(ray.direction.y, -ray.direction.y, stepY);
     a |= int(stepY * 2);
+
     float stepZ = 1 - step(0.0, ray.direction.z);
-    positiveRay.origin.z = mix(ray.origin.z, octreeSize.z - ray.origin.z, stepZ);
+    positiveRay.origin.z = mix(ray.origin.z, SIZE - ray.origin.z, stepZ);
     positiveRay.direction.z = mix(ray.direction.z, -ray.direction.z, stepZ);
     a |= int(stepZ * 4);
+}
 
+vec3 TraverseOctree(Ray ray)
+{
+    vec3 octreeSize = vec3(SIZE);
     vec3 color = vec3(0.0);
+
+    int a = 0;
+    Ray positiveRay = ray;
+    fixRayNegative(ray, positiveRay, a);
 
     vec3 t1, t2;
     float tMin, tMax;
@@ -98,14 +102,16 @@ vec3 TraverseOctree(Ray ray)
         return vec3(0.0);
 
     int stackIndex = 0;
-    stack[stackIndex++] = NodeInfo(0, vec3(0.0), 0, t1, t2, 0);
+    stack[stackIndex++] = NodeInfo(0, 0, vec3(0.0), 0, t1, t2);
 
     while (stackIndex > 0)
     {
         NodeInfo current = stack[--stackIndex];
 
         float mySize = SIZE / (1 << current.depth);
-        vec3 minBounds = vec3(current.root.x + mySize * (current.a & 1), current.root.y + mySize * ((current.a & 2) >> 1), current.root.z + mySize * ((current.a & 4) >> 2));
+        vec3 minBounds = vec3(  current.root.x + mySize * (current.childIdx & 1),
+                                current.root.y + mySize * ((current.childIdx & 2) >> 1),
+                                current.root.z + mySize * ((current.childIdx & 4) >> 2));
         vec3 maxBounds = minBounds + vec3(mySize);
 
         // one LOD level every 100 distance
@@ -125,48 +131,46 @@ vec3 TraverseOctree(Ray ray)
             int currentNodeIndex = entryNode(current.t1, tm);
             while (currentNodeIndex >= 0)
             {
-                switch (currentNodeIndex)
-                {
-                case 0: {
-                    tmpStack[count++] = NodeInfo(currentNode.children[a], minBounds, current.depth + 1,
-                                        current.t1, tm, a);
+                // tmpStack[count++] = NodeInfo(currentNode.children[currentNodeIndex ^ a], currentNodeIndex ^ a, minBounds, current.depth + 1,
+
+                //                     vec3(current.t1.x * (1 - float(currentNodeIndex & 1)) + current.t2.x * float(currentNodeIndex & 1),
+                //                          current.t1.y * (1 - float((currentNodeIndex & 2) >> 1)) + current.t2.y * float((currentNodeIndex & 2) >> 1),
+                //                          current.t1.z * (1 - float((currentNodeIndex & 4) >> 2)) + current.t2.z * float((currentNodeIndex & 4) >> 2)),
+                //                     vec3(current.t1.x * float(currentNodeIndex & 1) + current.t2.x * (1 - float(currentNodeIndex & 1)),
+                //                          current.t1.y * float((currentNodeIndex & 2) >> 1) + current.t2.y * (1 - float((currentNodeIndex & 2) >> 1)),
+                //                          current.t1.z * float((currentNodeIndex & 4) >> 2) + current.t2.z * (1 - float((currentNodeIndex & 4) >> 2))));
+                if (currentNodeIndex == 0) {
+                    tmpStack[count++] = NodeInfo(currentNode.children[a], a, minBounds, current.depth + 1,
+                                        current.t1, tm);
                     currentNodeIndex = nextNode(vec3(tm.x, tm.y, tm.z), 1, 2, 4);
-                    break;}
-                case 1: { 
-                    tmpStack[count++] = NodeInfo(currentNode.children[1^a], minBounds, current.depth + 1,
-                                        vec3(tm.x, current.t1.y, current.t1.z), vec3(current.t2.x, tm.y, tm.z), 1^a);
+                } else if (currentNodeIndex == 1) {
+                    tmpStack[count++] = NodeInfo(currentNode.children[1^a], 1^a, minBounds, current.depth + 1,
+                                        vec3(tm.x, current.t1.y, current.t1.z), vec3(current.t2.x, tm.y, tm.z));
                     currentNodeIndex = nextNode(vec3(current.t2.x, tm.y, tm.z), -1, 3, 5);
-                    break;}
-                case 2: { 
-                    tmpStack[count++] = NodeInfo(currentNode.children[2^a], minBounds, current.depth + 1,
-                                        vec3(current.t1.x, tm.y, current.t1.z), vec3(tm.x, current.t2.y, tm.z), 2^a);
+                } else if (currentNodeIndex == 2) {
+                    tmpStack[count++] = NodeInfo(currentNode.children[2^a], 2^a, minBounds, current.depth + 1,
+                                        vec3(current.t1.x, tm.y, current.t1.z), vec3(tm.x, current.t2.y, tm.z));
                     currentNodeIndex = nextNode(vec3(tm.x, current.t2.y, tm.z), 3, -1, 6);
-                    break;}
-                case 3: { 
-                    tmpStack[count++] = NodeInfo(currentNode.children[3^a], minBounds, current.depth + 1,
-                                        vec3(tm.x, tm.y, current.t1.z), vec3(current.t2.x, current.t2.y, tm.z), 3^a);
+                } else if (currentNodeIndex == 3) {
+                    tmpStack[count++] = NodeInfo(currentNode.children[3^a], 3^a, minBounds, current.depth + 1,
+                                        vec3(tm.x, tm.y, current.t1.z), vec3(current.t2.x, current.t2.y, tm.z));
                     currentNodeIndex = nextNode(vec3(current.t2.x, current.t2.y, tm.z), -1, -1, 7);
-                    break;}
-                case 4: { 
-                    tmpStack[count++] = NodeInfo(currentNode.children[4^a], minBounds, current.depth + 1,
-                                        vec3(current.t1.x, current.t1.y, tm.z), vec3(tm.x, tm.y, current.t2.z), 4^a);
+                } else if (currentNodeIndex == 4) {
+                    tmpStack[count++] = NodeInfo(currentNode.children[4^a], 4^a, minBounds, current.depth + 1,
+                                        vec3(current.t1.x, current.t1.y, tm.z), vec3(tm.x, tm.y, current.t2.z));
                     currentNodeIndex = nextNode(vec3(tm.x, tm.y, current.t2.z), 5, 6, -1);
-                    break;}
-                case 5: { 
-                    tmpStack[count++] = NodeInfo(currentNode.children[5^a], minBounds, current.depth + 1,
-                                        vec3(tm.x, current.t1.y, tm.z), vec3(current.t2.x, tm.y, current.t2.z), 5^a);
+                } else if (currentNodeIndex == 5) {
+                    tmpStack[count++] = NodeInfo(currentNode.children[5^a], 5^a, minBounds, current.depth + 1,
+                                        vec3(tm.x, current.t1.y, tm.z), vec3(current.t2.x, tm.y, current.t2.z));
                     currentNodeIndex = nextNode(vec3(current.t2.x, tm.y, current.t2.z), -1, 7, -1);
-                    break;}
-                case 6: { 
-                    tmpStack[count++] = NodeInfo(currentNode.children[6^a], minBounds, current.depth + 1,
-                                        vec3(current.t1.x, tm.y, tm.z), vec3(tm.x, current.t2.y, current.t2.z), 6^a);
+                } else if (currentNodeIndex == 6) {
+                    tmpStack[count++] = NodeInfo(currentNode.children[6^a], 6^a, minBounds, current.depth + 1,
+                                        vec3(current.t1.x, tm.y, tm.z), vec3(tm.x, current.t2.y, current.t2.z));
                     currentNodeIndex = nextNode(vec3(tm.x, current.t2.y, current.t2.z), 7, -1, -1);
-                    break;}
-                case 7: { 
-                    tmpStack[count++] = NodeInfo(currentNode.children[7^a], minBounds, current.depth + 1,
-                                        tm, current.t2, 7^a);
+                } else if (currentNodeIndex == 7) {
+                    tmpStack[count++] = NodeInfo(currentNode.children[7^a], 7^a, minBounds, current.depth + 1,
+                                        tm, current.t2);
                     currentNodeIndex = -1;
-                    break;}
                 }
             }
             for (int i = count - 1; i >= 0; i--) {

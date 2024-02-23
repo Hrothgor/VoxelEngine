@@ -1,13 +1,10 @@
-[13:42:28] SUCCESS: Window created successfully
-[13:42:28] INFO: OpenGL version: 4.3.0 NVIDIA 537.13
-[13:42:29] INFO: SVO built --------
-[13:42:29] INFO: 	Depth: 9
-[13:42:29] INFO: 	Size: 512
-[13:42:29] INFO: 	Max size: 134217728
-[13:42:29] INFO: 	Octree size: 696865
-[13:42:29] INFO: 	Octree memory size (KB): 24499 KB
-[13:42:29] INFO: 	Octree memory size (MB): 23 MB
-[13:42:29] INFO: Time to build SVO with noise: 361.356 ms
-[13:42:47] SUCCESS: Shader reloaded
-[13:43:17] SUCCESS: Shader reloaded
-[13:43:34] SUCCESS: Shader reloaded
+[14:01:05] SUCCESS: Window created successfully
+[14:01:05] INFO: OpenGL version: 4.3.0 NVIDIA 537.13
+[14:01:05] INFO: SVO built --------
+[14:01:05] INFO: 	Depth: 9
+[14:01:05] INFO: 	Size: 512
+[14:01:05] INFO: 	Max size: 134217728
+[14:01:05] INFO: 	Octree size: 696865
+[14:01:05] INFO: 	Octree memory size (KB): 24499 KB
+[14:01:05] INFO: 	Octree memory size (MB): 23 MB
+[14:01:05] INFO: Time to build SVO with noise: 357.018 ms
