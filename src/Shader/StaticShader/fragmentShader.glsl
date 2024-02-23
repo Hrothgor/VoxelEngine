@@ -53,7 +53,7 @@ vec3 CalculateNormals(vec3 hit, vec3 minBounds, vec3 maxBounds) {
     return normalize(normal);
 }
 
-#define SIZE 512.0
+#define SIZE 128.0
 
 int entryNode(vec3 t1, vec3 tm) {
     float Ax = 2.0 * step(tm.y, t1.x) + 4.0 * step(tm.z, t1.x);
@@ -87,6 +87,18 @@ void fixRayNegative(Ray ray, out Ray positiveRay, out int a) {
     a |= int(stepZ * 4);
 }
 
+int tableOctree[8][3] = int[8][3](
+    int[3](1, 2, 4),
+    int[3](-1, 3, 5),
+    int[3](3, -1, 6),
+    int[3](-1, -1, 7),
+    int[3](5, 6, -1),
+    int[3](-1, 7, -1),
+    int[3](7, -1, -1),
+    int[3](-1, -1, -1)
+);
+
+
 vec3 TraverseOctree(Ray ray)
 {
     vec3 octreeSize = vec3(SIZE);
@@ -112,10 +124,9 @@ vec3 TraverseOctree(Ray ray)
         vec3 minBounds = vec3(  current.root.x + mySize * (current.childIdx & 1),
                                 current.root.y + mySize * ((current.childIdx & 2) >> 1),
                                 current.root.z + mySize * ((current.childIdx & 4) >> 2));
-        vec3 maxBounds = minBounds + vec3(mySize);
 
         // one LOD level every 100 distance
-        vec3 center = minBounds + (maxBounds - minBounds) / 2.0;
+        vec3 center = minBounds + mySize / 2.0;
         float distance = length(center - ray.origin);
         int lod = 9 - int(distance / 100.0);
 
@@ -131,54 +142,23 @@ vec3 TraverseOctree(Ray ray)
             int currentNodeIndex = entryNode(current.t1, tm);
             while (currentNodeIndex >= 0)
             {
-                // tmpStack[count++] = NodeInfo(currentNode.children[currentNodeIndex ^ a], currentNodeIndex ^ a, minBounds, current.depth + 1,
-
-                //                     vec3(current.t1.x * (1 - float(currentNodeIndex & 1)) + current.t2.x * float(currentNodeIndex & 1),
-                //                          current.t1.y * (1 - float((currentNodeIndex & 2) >> 1)) + current.t2.y * float((currentNodeIndex & 2) >> 1),
-                //                          current.t1.z * (1 - float((currentNodeIndex & 4) >> 2)) + current.t2.z * float((currentNodeIndex & 4) >> 2)),
-                //                     vec3(current.t1.x * float(currentNodeIndex & 1) + current.t2.x * (1 - float(currentNodeIndex & 1)),
-                //                          current.t1.y * float((currentNodeIndex & 2) >> 1) + current.t2.y * (1 - float((currentNodeIndex & 2) >> 1)),
-                //                          current.t1.z * float((currentNodeIndex & 4) >> 2) + current.t2.z * (1 - float((currentNodeIndex & 4) >> 2))));
-                if (currentNodeIndex == 0) {
-                    tmpStack[count++] = NodeInfo(currentNode.children[a], a, minBounds, current.depth + 1,
-                                        current.t1, tm);
-                    currentNodeIndex = nextNode(vec3(tm.x, tm.y, tm.z), 1, 2, 4);
-                } else if (currentNodeIndex == 1) {
-                    tmpStack[count++] = NodeInfo(currentNode.children[1^a], 1^a, minBounds, current.depth + 1,
-                                        vec3(tm.x, current.t1.y, current.t1.z), vec3(current.t2.x, tm.y, tm.z));
-                    currentNodeIndex = nextNode(vec3(current.t2.x, tm.y, tm.z), -1, 3, 5);
-                } else if (currentNodeIndex == 2) {
-                    tmpStack[count++] = NodeInfo(currentNode.children[2^a], 2^a, minBounds, current.depth + 1,
-                                        vec3(current.t1.x, tm.y, current.t1.z), vec3(tm.x, current.t2.y, tm.z));
-                    currentNodeIndex = nextNode(vec3(tm.x, current.t2.y, tm.z), 3, -1, 6);
-                } else if (currentNodeIndex == 3) {
-                    tmpStack[count++] = NodeInfo(currentNode.children[3^a], 3^a, minBounds, current.depth + 1,
-                                        vec3(tm.x, tm.y, current.t1.z), vec3(current.t2.x, current.t2.y, tm.z));
-                    currentNodeIndex = nextNode(vec3(current.t2.x, current.t2.y, tm.z), -1, -1, 7);
-                } else if (currentNodeIndex == 4) {
-                    tmpStack[count++] = NodeInfo(currentNode.children[4^a], 4^a, minBounds, current.depth + 1,
-                                        vec3(current.t1.x, current.t1.y, tm.z), vec3(tm.x, tm.y, current.t2.z));
-                    currentNodeIndex = nextNode(vec3(tm.x, tm.y, current.t2.z), 5, 6, -1);
-                } else if (currentNodeIndex == 5) {
-                    tmpStack[count++] = NodeInfo(currentNode.children[5^a], 5^a, minBounds, current.depth + 1,
-                                        vec3(tm.x, current.t1.y, tm.z), vec3(current.t2.x, tm.y, current.t2.z));
-                    currentNodeIndex = nextNode(vec3(current.t2.x, tm.y, current.t2.z), -1, 7, -1);
-                } else if (currentNodeIndex == 6) {
-                    tmpStack[count++] = NodeInfo(currentNode.children[6^a], 6^a, minBounds, current.depth + 1,
-                                        vec3(current.t1.x, tm.y, tm.z), vec3(tm.x, current.t2.y, current.t2.z));
-                    currentNodeIndex = nextNode(vec3(tm.x, current.t2.y, current.t2.z), 7, -1, -1);
-                } else if (currentNodeIndex == 7) {
-                    tmpStack[count++] = NodeInfo(currentNode.children[7^a], 7^a, minBounds, current.depth + 1,
-                                        tm, current.t2);
-                    currentNodeIndex = -1;
-                }
+                vec3 nextT1 = vec3(
+                    mix(current.t1.x, tm.x, float(currentNodeIndex & 1)),
+                    mix(current.t1.y, tm.y, float((currentNodeIndex & 2) >> 1)),
+                    mix(current.t1.z, tm.z, float((currentNodeIndex & 4) >> 2)));
+                vec3 nextT2 = vec3(
+                    mix(tm.x, current.t2.x, float(currentNodeIndex & 1)),
+                    mix(tm.y, current.t2.y, float((currentNodeIndex & 2) >> 1)),
+                    mix(tm.z, current.t2.z, float((currentNodeIndex & 4) >> 2)));
+                tmpStack[count++] = NodeInfo(currentNode.children[currentNodeIndex^a], currentNodeIndex^a, minBounds, current.depth + 1, nextT1, nextT2);
+                currentNodeIndex = nextNode(nextT2, tableOctree[currentNodeIndex][0], tableOctree[currentNodeIndex][1], tableOctree[currentNodeIndex][2]);
             }
             for (int i = count - 1; i >= 0; i--) {
                 stack[stackIndex++] = tmpStack[i];
             }
         } else if ((currentNode.data & 1) != 0) { // Leaf is solid
             float tClosest = max(max(current.t1.x, current.t1.y), current.t1.z);
-            return abs(CalculateNormals(ray.origin + ray.direction * tClosest, minBounds, maxBounds));
+            return abs(CalculateNormals(ray.origin + ray.direction * tClosest, minBounds, minBounds + vec3(mySize)));
         }
     }
     return color;
