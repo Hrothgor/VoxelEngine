@@ -12,6 +12,8 @@ void Engine::Update(GLFWwindow *window) {
     float currentFrame = glfwGetTime();
     _deltaTime = currentFrame - _lastFrame;
     _lastFrame = currentFrame;
+    // Smooth fps
+    _fps += (1.0f / _deltaTime - _fps) * 0.03f;
 }
 
 float Engine::GetDeltaTime() const {
@@ -19,5 +21,5 @@ float Engine::GetDeltaTime() const {
 }
 
 int Engine::GetFPS() const {
-    return (1 / _deltaTime);
+    return (_fps);
 }

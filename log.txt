@@ -1,24 +1,10 @@
-[23:43:57] SUCCESS: Window created successfully
-[23:43:57] INFO: OpenGL version: 4.3.0 NVIDIA 536.23
-[23:43:57] INFO: SVO built --------
-[23:43:57] INFO: 	Depth: 7
-[23:43:57] INFO: 	Size: 128
-[23:43:57] INFO: 	Max size: 2097152
-[23:43:57] INFO: 	Octree size: 29065
-[23:43:57] INFO: 	Octree memory size (KB): 1021 KB
-[23:43:57] INFO: 	Octree memory size (MB): 0 MB
-[23:43:57] INFO: Time to build SVO with noise: 7.332 ms
-[23:44:12] SUCCESS: Shader reloaded
-[23:44:31] SUCCESS: Shader reloaded
-[23:46:48] SUCCESS: Shader reloaded
-[23:47:06] SUCCESS: Shader reloaded
-[23:47:28] ERROR: Could not compile shader : src/Shader/StaticShader/fragmentShader.glsl
-[23:47:28] ERROR: 	0(87) : error C7011: implicit cast from "float" to "int"
-
-[23:47:28] WARNING: Couldn't reload shader
-[23:47:36] SUCCESS: Shader reloaded
-[23:47:58] SUCCESS: Shader reloaded
-[23:49:15] SUCCESS: Shader reloaded
-[23:49:27] SUCCESS: Shader reloaded
-[23:49:33] SUCCESS: Shader reloaded
-[23:49:44] SUCCESS: Shader reloaded
+[13:07:57] SUCCESS: Window created successfully
+[13:07:57] INFO: OpenGL version: 4.3.0 NVIDIA 537.13
+[13:07:57] INFO: SVO built --------
+[13:07:57] INFO: 	Depth: 7
+[13:07:57] INFO: 	Size: 128
+[13:07:57] INFO: 	Max size: 2097152
+[13:07:57] INFO: 	Octree size: 29065
+[13:07:57] INFO: 	Octree memory size (KB): 1021 KB
+[13:07:57] INFO: 	Octree memory size (MB): 0 MB
+[13:07:57] INFO: Time to build SVO with noise: 8.197 ms

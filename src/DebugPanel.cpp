@@ -14,7 +14,6 @@ void DebugPanel::ImGuiRender() {
     // Draw Text using engine framerate
     ImGui::Text("Framerate: %d FPS", Engine::Get()->GetFPS());
     ImGui::Text("Frame Time: %.3f ms", Engine::Get()->GetDeltaTime() * 1000);
-    ImGui::Text("Framerate Imgui: %.1f ", ImGui::GetIO().Framerate);
 
     // Reload Shader
     if (ImGui::Button("Reload Shader")) {

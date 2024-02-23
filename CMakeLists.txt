@@ -7,7 +7,7 @@ project(voxel-engine VERSION 0.1.0 LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_FLAGS "/O2")
 
-add_compile_options(/fp:fast /fp:precise)
+add_compile_options(/fp:fast /fp:precise /EHsc)
 
 # Variables for Paths of External Libraries
 set(GLFW_ROOT_DIR external/glfw)

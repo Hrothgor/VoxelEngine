@@ -19,6 +19,7 @@ class Engine {
     private:
         float _deltaTime;
         float _lastFrame;
+        float _fps = 60.0f;
 
 // SINGLETON
     protected:
