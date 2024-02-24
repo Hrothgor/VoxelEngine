@@ -41,6 +41,7 @@ int main()
             glfwSetWindowShouldClose(window, true);
         });
 
+
         // glad: load all OpenGL function pointers
         // ---------------------------------------
         if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {

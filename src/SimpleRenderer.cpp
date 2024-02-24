@@ -27,6 +27,7 @@ void SimpleRenderer::Init(GLFWwindow* window)
     glBindFramebuffer(GL_FRAMEBUFFER, _FrameBuffer);
     glViewport(0, 0, 1920 / 2, 1080 / 2);
 
+    GLuint _Texture;
     glGenTextures(1, &_Texture);
     glBindTexture(GL_TEXTURE_2D, _Texture);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 1920 / 2, 1080 / 2, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
@@ -42,11 +43,11 @@ void SimpleRenderer::Init(GLFWwindow* window)
 
     auto start = std::chrono::high_resolution_clock::now();
     {
-        int size = 512;
-        std::vector<float> noiseOutput(size * size);
+        int size = 256;
+        std::vector<float> noiseOutput(size * size * size);
 
         auto fnSimplex = FastNoise::New<FastNoise::Simplex>();
-        fnSimplex->GenUniformGrid2D(noiseOutput.data(), 0, 0, size, size, 0.01, rand());
+        fnSimplex->GenUniformGrid3D(noiseOutput.data(), 0, 0, 0, size, size, size, 0.1, rand());
         
         SVO svo(log(size) / log(2));
         svo.Build(noiseOutput);
@@ -82,7 +83,7 @@ void SimpleRenderer::DrawFullScreenTriangle(const Camera &camera)
     glViewport(0, 0, 1920 / 2, 1080 / 2);
 
     glClearColor(1.00f, 0.49f, 0.04f, 1.00f);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT);
 
     _Shader.Start();
     _Shader.LoadTime(glfwGetTime());

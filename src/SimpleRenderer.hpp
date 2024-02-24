@@ -20,7 +20,6 @@ public:
     void DrawFullScreenTriangle(const Camera &camera);
 
     GLuint _FrameBuffer;
-    GLuint _Texture;
     StaticShader _Shader;
 private:
     GLuint _EmptyVAO;

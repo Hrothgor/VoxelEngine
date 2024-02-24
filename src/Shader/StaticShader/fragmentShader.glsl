@@ -68,6 +68,15 @@ int nextNode(vec3 t, int x, int y, int z) {
     return int (
         mix(mix(z, y, step(t.y, t.z)), x, step(t.x, t.y) * step(t.x, t.z))
     );
+
+    if (t.x < t.y) {
+        if (t.x < t.z)
+            return x;  // YZ plane because t.x is minimum
+    }
+    else if (t.y < t.z) {
+        return y; // XZ plane because t.y is minimum
+    }
+    return z; // XY plane because t.z is minimum
 }
 
 void fixRayNegative(Ray ray, out Ray positiveRay, out int a) {
@@ -98,9 +107,9 @@ int tableOctree[8][3] = int[8][3](
     int[3](-1, -1, -1)
 );
 
-
-vec3 TraverseOctree(Ray ray)
+vec3 TraverseOctree(Ray ray, out vec3 hitPos)
 {
+    float MaxRayDistance = 150.0;
     vec3 octreeSize = vec3(SIZE);
     vec3 color = vec3(0.0);
 
@@ -119,21 +128,28 @@ vec3 TraverseOctree(Ray ray)
     while (stackIndex > 0)
     {
         NodeInfo current = stack[--stackIndex];
+        
+        if (current.t2.x < 0 || current.t2.y < 0 || current.t2.z < 0)
+            continue;
+
+        float tClosest = max(max(current.t1.x, current.t1.y), current.t1.z);
+        if (tClosest > MaxRayDistance)
+            return color;
 
         float mySize = SIZE / (1 << current.depth);
         vec3 minBounds = vec3(  current.root.x + mySize * (current.childIdx & 1),
                                 current.root.y + mySize * ((current.childIdx & 2) >> 1),
                                 current.root.z + mySize * ((current.childIdx & 4) >> 2));
 
-        // one LOD level every 100 distance
+        // one LOD level every 50 distance
         vec3 center = minBounds + mySize / 2.0;
         float distance = length(center - ray.origin);
-        int lod = 9 - int(distance / 100.0);
+        int lod = 9 - int(distance / 50.0);
 
         Node currentNode = SVO[current.index];
         // Branch
         if ((currentNode.data & (1 << 31)) == 0 && current.depth < lod) {
-            color += vec3(0.02, 0.0, 0.0);
+            color += vec3(0.01);
 
             vec3 tm = 0.5 * (current.t1 + current.t2);
 
@@ -157,8 +173,8 @@ vec3 TraverseOctree(Ray ray)
                 stack[stackIndex++] = tmpStack[i];
             }
         } else if ((currentNode.data & 1) != 0) { // Leaf is solid
-            float tClosest = max(max(current.t1.x, current.t1.y), current.t1.z);
-            return abs(CalculateNormals(ray.origin + ray.direction * tClosest, minBounds, minBounds + vec3(mySize)));
+            hitPos = ray.origin + ray.direction * tClosest;
+            return CalculateNormals(hitPos, minBounds, minBounds + vec3(mySize));
         }
     }
     return color;
@@ -182,6 +198,14 @@ void main()
 	Ray cameraRay = Ray(camPos, camDir);
 
 	//final color
-    vec3 color = TraverseOctree(cameraRay);
-	out_Pixel = vec4(color, 1.0);
+    vec3 hitPos;
+    vec3 color = TraverseOctree(cameraRay, hitPos);
+    // Sun
+    vec3 sunPos = vec3(0.0, 1024, 512);
+    vec3 sunDir = normalize(sunPos - hitPos);
+    float NormalLightDot = dot(color, sunDir);
+    float brightness = max(NormalLightDot, 0.2);
+    vec3 diffuseColor = brightness * abs(color);
+
+	out_Pixel = vec4(diffuseColor, 1.0);
 }
