@@ -17,7 +17,8 @@ struct NodeInfo {
     int depth;
     vec3 t1;
     vec3 t2;
-} stack[64];
+} stack[25];
+// Stack size is (3*depth+1) 
 
 in vec2 uv;
 
@@ -107,9 +108,8 @@ int tableOctree[8][3] = int[8][3](
     int[3](-1, -1, -1)
 );
 
-vec3 TraverseOctree(Ray ray, out vec3 hitPos)
+vec3 TraverseOctree(Ray ray, float MaxRayDistance, out vec3 hitPos)
 {
-    float MaxRayDistance = 150.0;
     vec3 octreeSize = vec3(SIZE);
     vec3 color = vec3(0.0);
 
@@ -141,10 +141,10 @@ vec3 TraverseOctree(Ray ray, out vec3 hitPos)
                                 current.root.y + mySize * ((current.childIdx & 2) >> 1),
                                 current.root.z + mySize * ((current.childIdx & 4) >> 2));
 
-        // one LOD level every 50 distance
+        // one LOD level every 40 distance
         vec3 center = minBounds + mySize / 2.0;
         float distance = length(center - ray.origin);
-        int lod = 9 - int(distance / 50.0);
+        int lod = 9 - int(distance / 40.0);
 
         Node currentNode = SVO[current.index];
         // Branch
@@ -199,12 +199,12 @@ void main()
 
 	//final color
     vec3 hitPos;
-    vec3 color = TraverseOctree(cameraRay, hitPos);
+    vec3 color = TraverseOctree(cameraRay, 150, hitPos);
     // Sun
-    vec3 sunPos = vec3(0.0, 1024, 512);
+    vec3 sunPos = vec3(1024, 1024, 1024);
     vec3 sunDir = normalize(sunPos - hitPos);
     float NormalLightDot = dot(color, sunDir);
-    float brightness = max(NormalLightDot, 0.2);
+    float brightness = max(NormalLightDot, 0.2) * 1.5;
     vec3 diffuseColor = brightness * abs(color);
 
 	out_Pixel = vec4(diffuseColor, 1.0);

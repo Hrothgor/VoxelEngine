@@ -10,7 +10,10 @@ LogPanel::~LogPanel() {
 void LogPanel::ImGuiRender() {
     ImGui::Begin("Logs");
 
-    for (auto& log : Logger::Get()->GetLogs()) {
+    // Print last 100 logs
+    std::vector<Logger::LogStruct> logs = Logger::Get()->GetLogs();
+    for (int i = logs.size() >= 100 ? logs.size() - 100 : 0; i < logs.size(); i++) {
+        auto log = logs[i];
         ImVec4 color;
         switch (log.type) {
             case Logger::LogType::WARNING:
@@ -28,7 +31,6 @@ void LogPanel::ImGuiRender() {
         }
         ImGui::TextColored(color, Logger::Get()->FormatLog(log).c_str());
     }
-    ImGui::SetScrollHereY(1.0f);
 
     ImGui::End();
 }
