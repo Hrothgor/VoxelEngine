@@ -1,25 +1,15 @@
-[20:51:37] SUCCESS: Window created successfully
-[20:51:37] INFO: OpenGL version: 4.3.0 NVIDIA 536.23
-[20:51:37] INFO: Shape built --------
-[20:51:37] INFO: 	Size:  256
-[20:51:37] INFO: 	Max size:     16777216
-[20:51:37] INFO: 	Memory size (KB): 16384 KB
-[20:51:37] INFO: 	Memory size (MB): 16 MB
-[20:51:37] INFO: -----------------
-[20:51:37] INFO: Time to build Shape with noise: 92.555 ms
-[20:52:47] ERROR: Could not compile shader : src/Shader/StaticShader/fragmentShader.glsl
-[20:52:47] ERROR: 	0(80) : error C0000: syntax error, unexpected reserved word "else" at token "else"
-0(84) : error C0000: syntax error, unexpected '}' at token "}"
-0(95) : error C1503: undefined variable "fragCoord"
-0(99) : error C0000: syntax error, unexpected '=', expecting "::" at token "="
-0(114) : error C0000: syntax error, unexpected '=', expecting "::" at token "="
-
-[20:52:47] WARNING: Couldn't reload shader
-[20:52:54] SUCCESS: Shader reloaded
-[20:52:58] SUCCESS: Shader reloaded
-[20:53:08] SUCCESS: Shader reloaded
-[20:53:14] SUCCESS: Shader reloaded
-[20:53:14] SUCCESS: Shader reloaded
-[20:53:42] SUCCESS: Shader reloaded
-[20:53:58] SUCCESS: Shader reloaded
-[20:54:17] SUCCESS: Shader reloaded
+[23:54:19] SUCCESS: Window created successfully
+[23:54:19] INFO: OpenGL version: 4.3.0 NVIDIA 536.23
+[23:54:19] INFO: Shape built --------
+[23:54:19] INFO: 	Size:  256
+[23:54:19] INFO: 	Max size:     16777216
+[23:54:19] INFO: 	Memory size (KB): 16384 KB
+[23:54:19] INFO: 	Memory size (MB): 16 MB
+[23:54:19] INFO: -----------------
+[23:54:19] INFO: Time to build Shape with noise: 94.270 ms
+[23:54:24] SUCCESS: Shader reloaded
+[23:54:24] SUCCESS: Shader reloaded
+[23:54:36] SUCCESS: Shader reloaded
+[23:54:43] SUCCESS: Shader reloaded
+[23:54:49] SUCCESS: Shader reloaded
+[23:55:27] SUCCESS: Shader reloaded

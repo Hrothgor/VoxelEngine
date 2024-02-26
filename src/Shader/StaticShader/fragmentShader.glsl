@@ -30,13 +30,6 @@ bool intersectRayAABB(Ray ray, vec3 minBounds, vec3 maxBounds, out vec3 t1, out 
     return tMin <= tMax && tMax > 0.0;
 }
 
-float epsilon = 0.0001;
-
-vec3 CalculateNormals(vec3 hit, vec3 minBounds, vec3 maxBounds) {
-    vec3 normal = step(minBounds + epsilon, hit) - step(hit, maxBounds - epsilon);
-    return normalize(normal);
-}
-
 vec3 nextAxis(vec3 t)
 {
     return vec3(
@@ -45,6 +38,8 @@ vec3 nextAxis(vec3 t)
         step(t.z, t.x) * step(t.z, t.y)
     );
 }
+
+float epsilon = 0.001;
 
 #define SIZE 256
 
@@ -59,11 +54,12 @@ vec3 TraverseVolume(Ray ray, float MaxRayDistance, out vec3 hitPos)
         return vec3(0.0);
 
     // DDA algorithm
-    vec3 rayStart = ray.origin + ray.direction * tMin;
+    // if t2.x or t2.y or t2.z is negative, we are inside the volume
+    vec3 rayStart = ray.origin + ray.direction * max(tMin, 0.0);
     vec3 step = sign(ray.direction);
-    ivec3 currentPos = ivec3(rayStart + epsilon * step);
+    ivec3 currentPos = ivec3(rayStart + epsilon * ray.direction);
     vec3 tDelta = 1.0 / ray.direction * step;
-    vec3 t = abs((currentPos + max(step, vec3(0.0)) - rayStart) / ray.direction);
+    vec3 t = abs((currentPos + max(step, 0.0) - rayStart) / ray.direction);
 
     while (true)
     {
@@ -72,14 +68,14 @@ vec3 TraverseVolume(Ray ray, float MaxRayDistance, out vec3 hitPos)
             break;
         
         int current = int(texelFetch(iVolume, currentPos, 0).r * 255.0);
+        vec3 axis = nextAxis(t);
         if (current == 0) { // air
             color += vec3(0.004, 0.0, 0.0);
-            vec3 axis = nextAxis(t);
             t += tDelta * axis;
             currentPos += ivec3(step * axis);
         } else { // solid
-            hitPos = ray.origin + ray.direction * t;
-            return vec3(0.0, 1.0, 0.0);
+            hitPos = rayStart + ray.direction * t;
+            return axis;
         }
     }
     return color;
