@@ -54,7 +54,6 @@ vec3 TraverseVolume(Ray ray, float MaxRayDistance, out vec3 hitPos)
         return vec3(0.0);
 
     // DDA algorithm
-    // if t2.x or t2.y or t2.z is negative, we are inside the volume
     vec3 rayStart = ray.origin + ray.direction * max(tMin, 0.0);
     vec3 step = sign(ray.direction);
     ivec3 currentPos = ivec3(rayStart + epsilon * ray.direction);
