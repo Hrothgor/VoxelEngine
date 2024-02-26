@@ -5,33 +5,15 @@ struct Ray {
     vec3 direction;
 };
 
-struct Node {
-    int data;
-    int children[8];
-};
-
-struct NodeInfo {
-    int index;
-    int childIdx;
-    vec3 root;
-    int depth;
-    vec3 t1;
-    vec3 t2;
-} stack[25];
-// Stack size is (3*depth+1) 
-
 in vec2 uv;
 
 uniform float iTime;
 uniform vec2 iResolution;
 uniform mat4 iViewMatrix;
 
-out vec4 out_Pixel;
+uniform sampler3D iVolume;
 
-layout(std430, binding = 0) readonly buffer SSBO
-{
-    Node SVO[];
-};
+out vec4 out_Pixel;
 
 bool intersectRayAABB(Ray ray, vec3 minBounds, vec3 maxBounds, out vec3 t1, out vec3 t2, out float tMin, out float tMax) {
     vec3 invDirection = 1.0 / ray.direction;
@@ -48,133 +30,56 @@ bool intersectRayAABB(Ray ray, vec3 minBounds, vec3 maxBounds, out vec3 t1, out 
     return tMin <= tMax && tMax > 0.0;
 }
 
+float epsilon = 0.0001;
+
 vec3 CalculateNormals(vec3 hit, vec3 minBounds, vec3 maxBounds) {
-    float epsilon = 0.0001;
     vec3 normal = step(minBounds + epsilon, hit) - step(hit, maxBounds - epsilon);
     return normalize(normal);
 }
 
-#define SIZE 128.0
-
-int entryNode(vec3 t1, vec3 tm) {
-    float Ax = 2.0 * step(tm.y, t1.x) + 4.0 * step(tm.z, t1.x);
-    float Ay = 1.0 * step(tm.x, t1.y) + 4.0 * step(tm.z, t1.y);
-    float Az = 1.0 * step(tm.x, t1.z) + 2.0 * step(tm.y, t1.z);
-    return int (
-        mix(mix(Az, Ay, step(t1.z, t1.y)), Ax, step(t1.y, t1.x) * step(t1.z, t1.x))
-    );
-}
-
-int nextNode(vec3 t, int x, int y, int z) {
-    return int (
-        mix(mix(z, y, step(t.y, t.z)), x, step(t.x, t.y) * step(t.x, t.z))
-    );
-
-    if (t.x < t.y) {
-        if (t.x < t.z)
-            return x;  // YZ plane because t.x is minimum
-    }
-    else if (t.y < t.z) {
-        return y; // XZ plane because t.y is minimum
-    }
-    return z; // XY plane because t.z is minimum
-}
-
-void fixRayNegative(Ray ray, out Ray positiveRay, out int a) {
-    float stepX = 1 - step(0.0, ray.direction.x);
-    positiveRay.origin.x = mix(ray.origin.x, SIZE - ray.origin.x, stepX);
-    positiveRay.direction.x = mix(ray.direction.x, -ray.direction.x, stepX);
-    a |= int(stepX * 1);
-    
-    float stepY = 1 - step(0.0, ray.direction.y);
-    positiveRay.origin.y = mix(ray.origin.y, SIZE - ray.origin.y, stepY);
-    positiveRay.direction.y = mix(ray.direction.y, -ray.direction.y, stepY);
-    a |= int(stepY * 2);
-
-    float stepZ = 1 - step(0.0, ray.direction.z);
-    positiveRay.origin.z = mix(ray.origin.z, SIZE - ray.origin.z, stepZ);
-    positiveRay.direction.z = mix(ray.direction.z, -ray.direction.z, stepZ);
-    a |= int(stepZ * 4);
-}
-
-int tableOctree[8][3] = int[8][3](
-    int[3](1, 2, 4),
-    int[3](-1, 3, 5),
-    int[3](3, -1, 6),
-    int[3](-1, -1, 7),
-    int[3](5, 6, -1),
-    int[3](-1, 7, -1),
-    int[3](7, -1, -1),
-    int[3](-1, -1, -1)
-);
-
-vec3 TraverseOctree(Ray ray, float MaxRayDistance, out vec3 hitPos)
+vec3 nextAxis(vec3 t)
 {
-    vec3 octreeSize = vec3(SIZE);
-    vec3 color = vec3(0.0);
+    return vec3(
+        step(t.x, t.y) * step(t.x, t.z),
+        step(t.y, t.x) * step(t.y, t.z),
+        step(t.z, t.x) * step(t.z, t.y)
+    );
+}
 
-    int a = 0;
-    Ray positiveRay = ray;
-    fixRayNegative(ray, positiveRay, a);
+#define SIZE 256
+
+vec3 TraverseVolume(Ray ray, float MaxRayDistance, out vec3 hitPos)
+{
+    vec3 volumeSize = vec3(SIZE);
+    vec3 color = vec3(0.0);
 
     vec3 t1, t2;
     float tMin, tMax;
-    if (!intersectRayAABB(positiveRay, vec3(0.0), octreeSize, t1, t2, tMin, tMax))
+    if (!intersectRayAABB(ray, vec3(0.0), volumeSize, t1, t2, tMin, tMax))
         return vec3(0.0);
 
-    int stackIndex = 0;
-    stack[stackIndex++] = NodeInfo(0, 0, vec3(0.0), 0, t1, t2);
+    // DDA algorithm
+    vec3 rayStart = ray.origin + ray.direction * tMin;
+    vec3 step = sign(ray.direction);
+    ivec3 currentPos = ivec3(rayStart + epsilon * step);
+    vec3 tDelta = 1.0 / ray.direction * step;
+    vec3 t = abs((currentPos + max(step, vec3(0.0)) - rayStart) / ray.direction);
 
-    while (stackIndex > 0)
+    while (true)
     {
-        NodeInfo current = stack[--stackIndex];
+        // Check if we are out of bounds if yes break the while loop
+        if (currentPos.x < 0 || currentPos.y < 0 || currentPos.z < 0 || currentPos.x >= SIZE || currentPos.y >= SIZE || currentPos.z >= SIZE)
+            break;
         
-        if (current.t2.x < 0 || current.t2.y < 0 || current.t2.z < 0)
-            continue;
-
-        float tClosest = max(max(current.t1.x, current.t1.y), current.t1.z);
-        if (tClosest > MaxRayDistance)
-            return color;
-
-        float mySize = SIZE / (1 << current.depth);
-        vec3 minBounds = vec3(  current.root.x + mySize * (current.childIdx & 1),
-                                current.root.y + mySize * ((current.childIdx & 2) >> 1),
-                                current.root.z + mySize * ((current.childIdx & 4) >> 2));
-
-        // one LOD level every 40 distance
-        vec3 center = minBounds + mySize / 2.0;
-        float distance = length(center - ray.origin);
-        int lod = 9 - int(distance / 40.0);
-
-        Node currentNode = SVO[current.index];
-        // Branch
-        if ((currentNode.data & (1 << 31)) == 0 && current.depth < lod) {
-            color += vec3(0.01);
-
-            vec3 tm = 0.5 * (current.t1 + current.t2);
-
-            int count = 0;
-            NodeInfo tmpStack[4]; // because we push back but here we want to push front
-            int currentNodeIndex = entryNode(current.t1, tm);
-            while (currentNodeIndex >= 0)
-            {
-                vec3 nextT1 = vec3(
-                    mix(current.t1.x, tm.x, float(currentNodeIndex & 1)),
-                    mix(current.t1.y, tm.y, float((currentNodeIndex & 2) >> 1)),
-                    mix(current.t1.z, tm.z, float((currentNodeIndex & 4) >> 2)));
-                vec3 nextT2 = vec3(
-                    mix(tm.x, current.t2.x, float(currentNodeIndex & 1)),
-                    mix(tm.y, current.t2.y, float((currentNodeIndex & 2) >> 1)),
-                    mix(tm.z, current.t2.z, float((currentNodeIndex & 4) >> 2)));
-                tmpStack[count++] = NodeInfo(currentNode.children[currentNodeIndex^a], currentNodeIndex^a, minBounds, current.depth + 1, nextT1, nextT2);
-                currentNodeIndex = nextNode(nextT2, tableOctree[currentNodeIndex][0], tableOctree[currentNodeIndex][1], tableOctree[currentNodeIndex][2]);
-            }
-            for (int i = count - 1; i >= 0; i--) {
-                stack[stackIndex++] = tmpStack[i];
-            }
-        } else if ((currentNode.data & 1) != 0) { // Leaf is solid
-            hitPos = ray.origin + ray.direction * tClosest;
-            return CalculateNormals(hitPos, minBounds, minBounds + vec3(mySize));
+        int current = int(texelFetch(iVolume, currentPos, 0).r * 255.0);
+        if (current == 0) { // air
+            color += vec3(0.004, 0.0, 0.0);
+            vec3 axis = nextAxis(t);
+            t += tDelta * axis;
+            currentPos += ivec3(step * axis);
+        } else { // solid
+            hitPos = ray.origin + ray.direction * t;
+            return vec3(0.0, 1.0, 0.0);
         }
     }
     return color;
@@ -194,12 +99,11 @@ void main()
     camDir = (iViewMatrix * vec4(camDir, 0.0)).xyz;
     // get pos from view matrix
     vec3 camPos = (iViewMatrix * vec4(0.0, 0.0, 0.0, 1.0)).xyz;
-
 	Ray cameraRay = Ray(camPos, camDir);
 
 	//final color
     vec3 hitPos;
-    vec3 color = TraverseOctree(cameraRay, 150, hitPos);
+    vec3 color = TraverseVolume(cameraRay, 150.0, hitPos);
     // Sun
     vec3 sunPos = vec3(1024, 1024, 1024);
     vec3 sunDir = normalize(sunPos - hitPos);

@@ -20,8 +20,8 @@ void StaticShader::GetAllUniformLocation()
 {
     loc_Time = GetUniformLocation("iTime");
     loc_Resolution = GetUniformLocation("iResolution");
-
     loc_cameraViewMatrix = GetUniformLocation("iViewMatrix");
+    loc_textureVolume = GetUniformLocation("iVolume");
 }
 
 void StaticShader::LoadTime(float time)
@@ -37,4 +37,9 @@ void StaticShader::LoadResolution(const glm::vec2 &resolution)
 void StaticShader::LoadCameraViewMatrix(const glm::mat4 &viewMatrix)
 {
     LoadMatrix(loc_cameraViewMatrix, viewMatrix);
+}
+
+void StaticShader::LoadTextureVolume(int texture)
+{
+    LoadInt(loc_textureVolume, texture);
 }

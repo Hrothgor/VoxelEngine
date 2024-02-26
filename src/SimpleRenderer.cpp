@@ -1,10 +1,7 @@
 #include "SimpleRenderer.hpp"
-#define _USE_MATH_DEFINES
-#include <math.h>
-#include <chrono>
-#include "SVO.hpp"
 #include "Engine.hpp"  
-#include "Logger.hpp" 
+#include "Logger.hpp"
+#include "Shape.hpp"
 
 SimpleRenderer *SimpleRenderer::instance = nullptr;
 
@@ -20,42 +17,12 @@ SimpleRenderer::~SimpleRenderer()
 
 void SimpleRenderer::Init(GLFWwindow* window)
 {
-    
-    auto start = std::chrono::high_resolution_clock::now();
-        int size = 256;
-        std::vector<float> noiseOutput(size * size);
-
-        auto fnSimplex = FastNoise::New<FastNoise::Perlin>();
-        fnSimplex->GenUniformGrid2D(noiseOutput.data(), 0, 0, size, size, 0.02, 1337);
-        
-        SVO svo(log(size) / log(2));
-        svo.Build(noiseOutput);
-
-        // Create buffer
-        glGenBuffers(1, &_SSBO);
-        glBindBuffer(GL_SHADER_STORAGE_BUFFER, _SSBO);
-        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, _SSBO);
-        glBufferData(GL_SHADER_STORAGE_BUFFER, svo.GetOctree().size() * sizeof(SVO::Node), svo.GetOctree().data(), GL_STATIC_READ);
-        glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
-    auto finish = std::chrono::high_resolution_clock::now();
-    Logger::Get()->Log(Logger::LogType::INFO, "Time to build SVO with noise: %.3f ms", std::chrono::duration_cast<std::chrono::duration<double, std::milli>>(finish - start).count());
-
-
     glGenVertexArrays(1, &_EmptyVAO);
 
     //Create FrameBuffer and texture to render to it
     glGenFramebuffers(1, &_FrameBuffer);
     glBindFramebuffer(GL_FRAMEBUFFER, _FrameBuffer);
     glViewport(0, 0, 1920, 1080);
-
-    // float *data = new float[256 * 256 * 3];
-    // for (int i = 0; i < 256 * 256 * 3; i += 3)
-    // {
-    //     float value = (noiseOutput[i/3] + 1) /2;
-    //     data[i] = value;
-    //     data[i + 1] = value;
-    //     data[i + 2] = value;
-    // }
 
     GLuint _Texture;
     glGenTextures(1, &_Texture);
@@ -70,6 +37,20 @@ void SimpleRenderer::Init(GLFWwindow* window)
     if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
         Logger::Get()->Log(Logger::LogType::ERROR, "ERROR::FRAMEBUFFER:: Framebuffer is not complete!");
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+    Shape shape(256);
+    shape.Build();
+    //load data into a 3D texture
+    glGenTextures(1, &_TextureShape);
+    glBindTexture(GL_TEXTURE_3D, _TextureShape);
+    // set the texture parameters
+    glTexImage3D(GL_TEXTURE_3D, 0, GL_R8, 256, 256, 256, 0, GL_RED, GL_UNSIGNED_BYTE, shape.GetData().data());
+    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+    glBindTexture(GL_TEXTURE_3D, 0);
     
     _ImGuiLayer.Start(window);
 }
@@ -94,16 +75,22 @@ void SimpleRenderer::DrawFullScreenTriangle(const Camera &camera)
     glClearColor(1.00f, 0.49f, 0.04f, 1.00f);
     glClear(GL_COLOR_BUFFER_BIT);
 
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_3D, _TextureShape);
+
     _Shader.Start();
     _Shader.LoadTime(glfwGetTime());
     GLint ViewportSize[4];
     glGetIntegerv(GL_VIEWPORT, ViewportSize);
     _Shader.LoadResolution(glm::vec2(ViewportSize[2], ViewportSize[3]));
     _Shader.LoadCameraViewMatrix(camera.GetViewMatrix());
+    _Shader.LoadTextureVolume(0);
 
     glBindVertexArray(_EmptyVAO);
     glDrawArrays(GL_TRIANGLES, 0, 3);
     glBindVertexArray(0);
+
+    glBindTexture(GL_TEXTURE_3D, 0);
 
     _Shader.Stop();
 

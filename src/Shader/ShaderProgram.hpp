@@ -22,6 +22,7 @@ class ShaderProgram {
 
         int GetUniformLocation(const std::string &uniformName);
         virtual void GetAllUniformLocation() = 0;
+        void LoadInt(int location, int value);
         void LoadFloat(int location, float value);
         void LoadBool(int location, bool value);
         void LoadVector2(int location, const glm::vec2 &value);

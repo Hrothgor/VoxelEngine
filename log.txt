@@ -1,12 +1,25 @@
-[13:55:57] SUCCESS: Window created successfully
-[13:55:57] INFO: OpenGL version: 4.3.0 NVIDIA 536.23
-[13:55:57] INFO: SVO built --------
-[13:55:57] INFO: 	Depth: 8
-[13:55:57] INFO: 	Size:  256
-[13:55:57] INFO: 	Max size:     16777216
-[13:55:57] INFO: 	Octree size:  19173961
-[13:55:57] INFO: 	Octree memory size (KB): 674084 KB
-[13:55:57] INFO: 	Octree memory size (MB): 658 MB
-[13:55:57] INFO: 	Texture 3D would take:   16 MB
-[13:55:57] INFO: -----------------
-[13:55:58] INFO: Time to build SVO with noise: 1215.566 ms
+[20:51:37] SUCCESS: Window created successfully
+[20:51:37] INFO: OpenGL version: 4.3.0 NVIDIA 536.23
+[20:51:37] INFO: Shape built --------
+[20:51:37] INFO: 	Size:  256
+[20:51:37] INFO: 	Max size:     16777216
+[20:51:37] INFO: 	Memory size (KB): 16384 KB
+[20:51:37] INFO: 	Memory size (MB): 16 MB
+[20:51:37] INFO: -----------------
+[20:51:37] INFO: Time to build Shape with noise: 92.555 ms
+[20:52:47] ERROR: Could not compile shader : src/Shader/StaticShader/fragmentShader.glsl
+[20:52:47] ERROR: 	0(80) : error C0000: syntax error, unexpected reserved word "else" at token "else"
+0(84) : error C0000: syntax error, unexpected '}' at token "}"
+0(95) : error C1503: undefined variable "fragCoord"
+0(99) : error C0000: syntax error, unexpected '=', expecting "::" at token "="
+0(114) : error C0000: syntax error, unexpected '=', expecting "::" at token "="
+
+[20:52:47] WARNING: Couldn't reload shader
+[20:52:54] SUCCESS: Shader reloaded
+[20:52:58] SUCCESS: Shader reloaded
+[20:53:08] SUCCESS: Shader reloaded
+[20:53:14] SUCCESS: Shader reloaded
+[20:53:14] SUCCESS: Shader reloaded
+[20:53:42] SUCCESS: Shader reloaded
+[20:53:58] SUCCESS: Shader reloaded
+[20:54:17] SUCCESS: Shader reloaded
