@@ -1,15 +1,17 @@
-[23:54:19] SUCCESS: Window created successfully
-[23:54:19] INFO: OpenGL version: 4.3.0 NVIDIA 536.23
-[23:54:19] INFO: Shape built --------
-[23:54:19] INFO: 	Size:  256
-[23:54:19] INFO: 	Max size:     16777216
-[23:54:19] INFO: 	Memory size (KB): 16384 KB
-[23:54:19] INFO: 	Memory size (MB): 16 MB
-[23:54:19] INFO: -----------------
-[23:54:19] INFO: Time to build Shape with noise: 94.270 ms
-[23:54:24] SUCCESS: Shader reloaded
-[23:54:24] SUCCESS: Shader reloaded
-[23:54:36] SUCCESS: Shader reloaded
-[23:54:43] SUCCESS: Shader reloaded
-[23:54:49] SUCCESS: Shader reloaded
-[23:55:27] SUCCESS: Shader reloaded
+[00:53:22] SUCCESS: Window created successfully
+[00:53:22] INFO: OpenGL version: 4.3.0 NVIDIA 536.23
+[00:53:22] INFO: Shape built --------
+[00:53:22] INFO: 	Size:  256
+[00:53:22] INFO: 	Max size:     16777216
+[00:53:22] INFO: 	Memory size (KB): 16384 KB
+[00:53:22] INFO: 	Memory size (MB): 16 MB
+[00:53:22] INFO: -----------------
+[00:53:22] INFO: Time to build Shape with noise: 93.829 ms
+[00:53:27] SUCCESS: Shader reloaded
+[00:53:38] SUCCESS: Shader reloaded
+[00:53:39] SUCCESS: Shader reloaded
+[00:53:45] SUCCESS: Shader reloaded
+[00:53:55] SUCCESS: Shader reloaded
+[00:54:07] SUCCESS: Shader reloaded
+[00:54:07] SUCCESS: Shader reloaded
+[00:54:08] SUCCESS: Shader reloaded
