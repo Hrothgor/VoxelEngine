@@ -17,27 +17,6 @@ SimpleRenderer::~SimpleRenderer()
 
 void SimpleRenderer::Init(GLFWwindow* window)
 {
-    glGenVertexArrays(1, &_EmptyVAO);
-
-    //Create FrameBuffer and texture to render to it
-    glGenFramebuffers(1, &_FrameBuffer);
-    glBindFramebuffer(GL_FRAMEBUFFER, _FrameBuffer);
-    glViewport(0, 0, 1920, 1080);
-
-    GLuint _Texture;
-    glGenTextures(1, &_Texture);
-    glBindTexture(GL_TEXTURE_2D, _Texture);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 1920, 1080, 0, GL_RGB, GL_FLOAT, NULL);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glBindTexture(GL_TEXTURE_2D, 0);
-
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, _Texture, 0);
-
-    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-        Logger::Get()->Log(Logger::LogType::ERROR, "ERROR::FRAMEBUFFER:: Framebuffer is not complete!");
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
     Shape shape(256);
     shape.Build();
     //load data into a 3D texture
@@ -51,6 +30,27 @@ void SimpleRenderer::Init(GLFWwindow* window)
     glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
     glBindTexture(GL_TEXTURE_3D, 0);
+
+    glGenVertexArrays(1, &_EmptyVAO);
+
+    //Create FrameBuffer and texture to render to it
+    glGenFramebuffers(1, &_FrameBuffer);
+    glBindFramebuffer(GL_FRAMEBUFFER, _FrameBuffer);
+    glViewport(0, 0, 1920, 1080);
+
+    glGenTextures(1, &_Texture);
+    glBindTexture(GL_TEXTURE_2D, _Texture);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 1920, 1080, 0, GL_RGB, GL_FLOAT, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glBindTexture(GL_TEXTURE_2D, 0);
+
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, _Texture, 0);
+
+    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+        Logger::Get()->Log(Logger::LogType::ERROR, "ERROR::FRAMEBUFFER:: Framebuffer is not complete!");
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
     
     _ImGuiLayer.Start(window);
 }
