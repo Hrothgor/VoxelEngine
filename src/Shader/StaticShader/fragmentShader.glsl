@@ -30,19 +30,20 @@ bool intersectRayAABB(Ray ray, vec3 minBounds, vec3 maxBounds, out vec3 t1, out 
     return tMin <= tMax && tMax > 0.0;
 }
 
-float epsilon = 0.0001;
+float epsilon = 0.00001;
 
 #define SIZE 256
 
-bool isEqual(float a, float b)
-{
-    return abs(a - b) < epsilon;
-}
-
 vec3 CalculateNormals(vec3 hit, vec3 minBounds)
 {
-    vec3 normal = step(minBounds + epsilon, hit) - step(hit, minBounds + 1 - epsilon);
+    vec3 normal = step(minBounds, hit * (1 - epsilon)) - step(hit * (1 + epsilon), minBounds + 1);
     return normalize(normal);
+
+    // return vec3(
+    //     step(t.x, t.y) * step(t.x, t.z),
+    //     step(t.y, t.x) * step(t.y, t.z),
+    //     step(t.z, t.x) * step(t.z, t.y)
+    // );
 }
 
 vec3 nextAxis(vec3 t)
@@ -68,9 +69,8 @@ vec3 TraverseVolume(Ray ray, float MaxRayDistance, out vec3 hitPos)
     vec3 rayStart = ray.origin + ray.direction * max(tMin, 0.0);
     vec3 step = sign(ray.direction);
     ivec3 currentPos = ivec3(rayStart + epsilon * ray.direction);
-    vec3 tDelta = 1.0 / ray.direction * step;
+    vec3 tDelta = 1.0 / ray.direction;
     vec3 t = abs((currentPos + max(step, 0.0) - rayStart) / ray.direction);
-    vec3 tBegin = abs((currentPos + max(step, 0.0) - rayStart) / ray.direction);
 
     while (true)
     {
@@ -78,19 +78,43 @@ vec3 TraverseVolume(Ray ray, float MaxRayDistance, out vec3 hitPos)
         if (currentPos.x < 0 || currentPos.y < 0 || currentPos.z < 0 || currentPos.x >= SIZE || currentPos.y >= SIZE || currentPos.z >= SIZE)
             break;
         
+        vec3 axis = nextAxis(t);
+        currentPos += ivec3(step * axis);
+        
         int current = int(texelFetch(iVolume, currentPos, 0).r * 255.0);
         if (current == 0) { // air
             color += vec3(0.004, 0.0, 0.0);
-            vec3 axis = nextAxis(t);
-            t += tDelta * axis;
-            currentPos += ivec3(step * axis);
+            t += tDelta * step * axis;
         } else { // solid
-            hitPos = rayStart + ray.direction * t;
-            vec3 axis = nextAxis(t);
-            return axis;
+            hitPos = rayStart + t * ray.direction;
+            // return vec3(length(hitPos - ray.origin)) / 400; // DEPTH DEBUG WITH FAR == 400
+            return abs(axis);
         }
     }
     return color;
+}
+
+mat4 CreateTransforMatrix(vec3 translation, vec3 rotation)
+{
+    mat4 transform = mat4(1.0);
+    transform[3][0] = translation.x;
+    transform[3][1] = translation.y;
+    transform[3][2] = translation.z;
+
+    // right
+    transform[0][0] = cos(rotation.y) * cos(rotation.z);
+    transform[0][1] = cos(rotation.y) * sin(rotation.z);
+    transform[0][2] = -sin(rotation.y);
+    // up
+    transform[1][0] = sin(rotation.x) * sin(rotation.y) * cos(rotation.z) - cos(rotation.x) * sin(rotation.z);
+    transform[1][1] = sin(rotation.x) * sin(rotation.y) * sin(rotation.z) + cos(rotation.x) * cos(rotation.z);
+    transform[1][2] = sin(rotation.x) * cos(rotation.y);
+    // forward
+    transform[2][0] = cos(rotation.x) * sin(rotation.y) * cos(rotation.z) + sin(rotation.x) * sin(rotation.z);
+    transform[2][1] = cos(rotation.x) * sin(rotation.y) * sin(rotation.z) - sin(rotation.x) * cos(rotation.z);
+    transform[2][2] = cos(rotation.x) * cos(rotation.y);
+
+    return transform;
 }
 
 void main()
@@ -107,6 +131,15 @@ void main()
     camDir = (iViewMatrix * vec4(camDir, 0.0)).xyz;
     // get pos from view matrix
     vec3 camPos = (iViewMatrix * vec4(0.0, 0.0, 0.0, 1.0)).xyz;
+
+    // TEMP TRANSFORM MATRIX
+    mat4 transform = CreateTransforMatrix(
+        vec3(0.0), 
+        vec3(0.0, iTime, 0.0));
+    camPos = (transform * vec4(camPos, 1.0)).xyz;
+    camDir = (transform * vec4(camDir, 0.0)).xyz;
+    //
+
 	Ray cameraRay = Ray(camPos, camDir);
 
 	//final color
@@ -119,5 +152,5 @@ void main()
     float brightness = max(NormalLightDot, 0.2) * 1.5;
     vec3 diffuseColor = brightness * abs(color);
 
-	out_Pixel = vec4(diffuseColor, 1.0);
+	out_Pixel = vec4(color, 1.0);
 }

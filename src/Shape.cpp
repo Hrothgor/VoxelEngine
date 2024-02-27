@@ -26,7 +26,6 @@ void Shape::Build()
 		_Data[i] = noiseOutput[i] > 0.0 ? 1 : 0;
 	}
 
-	_Data[0] = 1;
 	delete[] noiseOutput;
 
 	Logger::Get()->Log(Logger::INFO, "Shape built --------");
