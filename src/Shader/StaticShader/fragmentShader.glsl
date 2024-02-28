@@ -37,16 +37,25 @@ float epsilon = 0.00001;
 
 #define SIZE 256
 
-vec3 CalculateNormals(vec3 hit, vec3 minBounds)
+vec3 CalculateNormals(vec3 hitPosition, vec3 minBounds, vec3 maxBounds)
 {
-    vec3 normal = step(minBounds, hit * (1 - epsilon)) - step(hit * (1 + epsilon), minBounds + 1);
-    return normalize(normal);
+    vec3 faceNormal;
 
-    // return vec3(
-    //     step(t.x, t.y) * step(t.x, t.z),
-    //     step(t.y, t.x) * step(t.y, t.z),
-    //     step(t.z, t.x) * step(t.z, t.y)
-    // );
+    // Check which face has been hit
+    vec3 center = (minBounds + maxBounds) * 0.5;
+    vec3 extent = (maxBounds - minBounds) * 0.5;
+    vec3 hitDifference = (hitPosition - center) / extent;
+
+    vec3 absDifference = abs(hitDifference);
+
+    // Determine the face normal based on the maximum difference
+    faceNormal = vec3(
+        step(absDifference.y, absDifference.x) * step(absDifference.z, absDifference.x),
+        step(absDifference.x, absDifference.y) * step(absDifference.z, absDifference.y),
+        step(absDifference.x, absDifference.z) * step(absDifference.y, absDifference.z)
+    );
+
+    return faceNormal;
 }
 
 vec3 nextAxis(vec3 t)
@@ -105,21 +114,20 @@ HitInfo TraverseVolume(Ray ray, float MaxRayDistance)
         if (currentPos.x < 0 || currentPos.y < 0 || currentPos.z < 0 || currentPos.x >= SIZE || currentPos.y >= SIZE || currentPos.z >= SIZE)
             break;
         
-        vec3 axis = nextAxis(t);
-
-        
         int current = int(texelFetch(iVolume, currentPos, 0).r * 255.0);
         if (current == 0) { // air
             color += vec3(0.004, 0.0, 0.0);
+            vec3 axis = nextAxis(t);
             t += tDelta * step * axis;
             currentPos += ivec3(step * axis);
         } else { // solid
             float noise = noise(currentPos) * 0.5 + 0.5;
             vec3 brownColor = vec3(0.71, 0.36, 0.13);
             vec3 brownColor2 = vec3(0.41, 0.18, 0.02);
+            vec3 hitPos = rayStart + t * ray.direction;
             return HitInfo(
-                rayStart + t * ray.direction,
-                abs(axis),
+                hitPos,
+                (CalculateNormals(hitPos, currentPos, currentPos + 1)),
                 mix(brownColor2, brownColor, noise),
                 true
             );
@@ -131,29 +139,6 @@ HitInfo TraverseVolume(Ray ray, float MaxRayDistance)
         color,
         false
     );
-}
-
-mat4 CreateTransforMatrix(vec3 translation, vec3 rotation)
-{
-    mat4 transform = mat4(1.0);
-    transform[3][0] = translation.x;
-    transform[3][1] = translation.y;
-    transform[3][2] = translation.z;
-
-    // right
-    transform[0][0] = cos(rotation.y) * cos(rotation.z);
-    transform[0][1] = cos(rotation.y) * sin(rotation.z);
-    transform[0][2] = -sin(rotation.y);
-    // up
-    transform[1][0] = sin(rotation.x) * sin(rotation.y) * cos(rotation.z) - cos(rotation.x) * sin(rotation.z);
-    transform[1][1] = sin(rotation.x) * sin(rotation.y) * sin(rotation.z) + cos(rotation.x) * cos(rotation.z);
-    transform[1][2] = sin(rotation.x) * cos(rotation.y);
-    // forward
-    transform[2][0] = cos(rotation.x) * sin(rotation.y) * cos(rotation.z) + sin(rotation.x) * sin(rotation.z);
-    transform[2][1] = cos(rotation.x) * sin(rotation.y) * sin(rotation.z) - sin(rotation.x) * cos(rotation.z);
-    transform[2][2] = cos(rotation.x) * cos(rotation.y);
-
-    return transform;
 }
 
 void main()
@@ -172,9 +157,6 @@ void main()
     vec3 camPos = (iViewMatrix * vec4(0.0, 0.0, 0.0, 1.0)).xyz;
 
     // TEMP TRANSFORM MATRIX
-    // mat4 transform = CreateTransforMatrix(
-    //     vec3(0.0), 
-    //     vec3(0.0, iTime, 0.0));
     // camPos = (transform * vec4(camPos, 1.0)).xyz;
     // camDir = (transform * vec4(camDir, 0.0)).xyz;
     //
