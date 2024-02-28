@@ -14,7 +14,8 @@ void ViewportPanel::ImGuiRender() {
     bool isFocus = ImGui::IsWindowFocused() || ImGui::IsWindowHovered();
 
     ImVec2 size = ImGui::GetContentRegionAvail();
-    ImGui::Image((ImTextureID)SimpleRenderer::Get()->_Texture, size, ImVec2 {0, 1}, ImVec2 {1, 0});
+    // Draw 4 textures
+    ImGui::Image((ImTextureID)SimpleRenderer::Get()->_gAlbedo, size, ImVec2 {0, 1}, ImVec2 {1, 0});
 
     ImGui::End();
     ImGui::PopStyleVar();

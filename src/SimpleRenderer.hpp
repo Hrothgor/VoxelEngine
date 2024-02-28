@@ -19,8 +19,8 @@ public:
     void EndFrame();
     void DrawFullScreenTriangle(const Camera &camera);
 
-    GLuint _FrameBuffer;
-    GLuint _Texture;
+    GLuint _gBuffer;
+    GLuint _gAlbedo, _gNormal, _gPosition, _gDepth;
     StaticShader _Shader;
     GLuint _TextureShape;
 private:

@@ -13,7 +13,10 @@ uniform mat4 iViewMatrix;
 
 uniform sampler3D iVolume;
 
-out vec4 out_Pixel;
+layout (location = 0) out vec4 gAlbedo;
+layout (location = 1) out vec4 gNormal;
+layout (location = 2) out vec4 gPosition;
+layout (location = 3) out vec4 gDepth;
 
 bool intersectRayAABB(Ray ray, vec3 minBounds, vec3 maxBounds, out vec3 t1, out vec3 t2, out float tMin, out float tMax) {
     vec3 invDirection = 1.0 / ray.direction;
@@ -55,7 +58,31 @@ vec3 nextAxis(vec3 t)
     );
 }
 
-vec3 TraverseVolume(Ray ray, float MaxRayDistance, out vec3 hitPos)
+struct HitInfo
+{
+    vec3 hitPos;
+    vec3 normal;
+    vec3 color;
+    bool hit;
+};
+
+float noise(vec3 x)
+{
+    vec3 p = floor(x);
+    vec3 f = fract(x);
+    f = f * f * (3.0 - 2.0 * f);
+    float n = p.x + p.y * 157.0 + 113.0 * p.z;
+    return mix(mix(mix( fract(sin(n) * 43758.5453), 
+                        fract(sin(n + 1.0) * 43758.5453), f.x),
+                    mix( fract(sin(n + 157.0) * 43758.5453), 
+                        fract(sin(n + 158.0) * 43758.5453), f.x), f.y),
+                mix(mix( fract(sin(n + 113.0) * 43758.5453), 
+                        fract(sin(n + 114.0) * 43758.5453), f.x),
+                    mix( fract(sin(n + 270.0) * 43758.5453), 
+                        fract(sin(n + 271.0) * 43758.5453), f.x), f.y), f.z);
+}
+
+HitInfo TraverseVolume(Ray ray, float MaxRayDistance)
 {
     vec3 volumeSize = vec3(SIZE);
     vec3 color = vec3(0.0);
@@ -63,12 +90,12 @@ vec3 TraverseVolume(Ray ray, float MaxRayDistance, out vec3 hitPos)
     vec3 t1, t2;
     float tMin, tMax;
     if (!intersectRayAABB(ray, vec3(0.0), volumeSize, t1, t2, tMin, tMax))
-        return vec3(0.0);
+        return HitInfo(vec3(0.0), vec3(0.0), color, false);
 
     // DDA algorithm
-    vec3 rayStart = ray.origin + ray.direction * max(tMin, 0.0);
+    vec3 rayStart = ray.origin + ray.direction * max(tMin+0.001, 0.0);
     vec3 step = sign(ray.direction);
-    ivec3 currentPos = ivec3(rayStart + epsilon * ray.direction);
+    ivec3 currentPos = ivec3(rayStart);
     vec3 tDelta = 1.0 / ray.direction;
     vec3 t = abs((currentPos + max(step, 0.0) - rayStart) / ray.direction);
 
@@ -86,12 +113,23 @@ vec3 TraverseVolume(Ray ray, float MaxRayDistance, out vec3 hitPos)
             color += vec3(0.004, 0.0, 0.0);
             t += tDelta * step * axis;
         } else { // solid
-            hitPos = rayStart + t * ray.direction;
-            // return vec3(length(hitPos - ray.origin)) / 400; // DEPTH DEBUG WITH FAR == 400
-            return abs(axis);
+            float noise = noise(currentPos) * 0.5 + 0.5;
+            vec3 brownColor = vec3(0.71, 0.36, 0.13);
+            vec3 brownColor2 = vec3(0.41, 0.18, 0.02);
+            return HitInfo(
+                rayStart + t * ray.direction,
+                abs(axis),
+                mix(brownColor2, brownColor, noise),
+                true
+            );
         }
     }
-    return color;
+    return HitInfo(
+        vec3(0.0),
+        vec3(0.0),
+        color,
+        false
+    );
 }
 
 mat4 CreateTransforMatrix(vec3 translation, vec3 rotation)
@@ -133,24 +171,26 @@ void main()
     vec3 camPos = (iViewMatrix * vec4(0.0, 0.0, 0.0, 1.0)).xyz;
 
     // TEMP TRANSFORM MATRIX
-    mat4 transform = CreateTransforMatrix(
-        vec3(0.0), 
-        vec3(0.0, iTime, 0.0));
-    camPos = (transform * vec4(camPos, 1.0)).xyz;
-    camDir = (transform * vec4(camDir, 0.0)).xyz;
+    // mat4 transform = CreateTransforMatrix(
+    //     vec3(0.0), 
+    //     vec3(0.0, iTime, 0.0));
+    // camPos = (transform * vec4(camPos, 1.0)).xyz;
+    // camDir = (transform * vec4(camDir, 0.0)).xyz;
     //
 
 	Ray cameraRay = Ray(camPos, camDir);
 
 	//final color
-    vec3 hitPos;
-    vec3 color = TraverseVolume(cameraRay, 150.0, hitPos);
+    HitInfo hit = TraverseVolume(cameraRay, 150.0);
     // Sun
     vec3 sunPos = vec3(1024, 1024, 1024);
-    vec3 sunDir = normalize(sunPos - hitPos);
-    float NormalLightDot = dot(color, sunDir);
+    vec3 sunDir = normalize(sunPos - hit.hitPos);
+    float NormalLightDot = dot(hit.color, sunDir);
     float brightness = max(NormalLightDot, 0.2) * 1.5;
-    vec3 diffuseColor = brightness * abs(color);
+    vec3 diffuseColor = brightness * abs(hit.color);
 
-	out_Pixel = vec4(color, 1.0);
+    gAlbedo = vec4(diffuseColor, 1.0); // Albdeo
+    gNormal = vec4(hit.normal, 1.0); // Normal
+    gPosition = vec4(hit.hitPos / 255, 1.0); // Position
+    gDepth = mix(vec4(1.0), vec4(vec3(length(hit.hitPos - camPos) / 400), 1.0), int(hit.hit)); // Depth FAR == 400
 }
