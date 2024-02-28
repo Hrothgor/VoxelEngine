@@ -106,12 +106,13 @@ HitInfo TraverseVolume(Ray ray, float MaxRayDistance)
             break;
         
         vec3 axis = nextAxis(t);
-        currentPos += ivec3(step * axis);
+
         
         int current = int(texelFetch(iVolume, currentPos, 0).r * 255.0);
         if (current == 0) { // air
             color += vec3(0.004, 0.0, 0.0);
             t += tDelta * step * axis;
+            currentPos += ivec3(step * axis);
         } else { // solid
             float noise = noise(currentPos) * 0.5 + 0.5;
             vec3 brownColor = vec3(0.71, 0.36, 0.13);
