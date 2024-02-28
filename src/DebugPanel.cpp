@@ -17,7 +17,7 @@ void DebugPanel::ImGuiRender() {
 
     // Reload Shader
     if (ImGui::Button("Reload Shader")) {
-        SimpleRenderer::Get()->_Shader.Reload();
+        SimpleRenderer::Get()->_GeometryShader.Reload();
     }
 
     ImGui::End();

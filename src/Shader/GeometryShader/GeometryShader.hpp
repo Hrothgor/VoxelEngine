@@ -1,21 +1,23 @@
 #pragma once
 
-#ifndef STATICSHADER_HPP_
-#define STATICSHADER_HPP_
+#ifndef GEOMETRYSHADER_HPP_
+#define GEOMETRYSHADER_HPP_
 
 #include "Include.hpp"
 #include "Shader/ShaderProgram.hpp"
 
-class StaticShader : public ShaderProgram {
+class GeometryShader : public ShaderProgram {
     public:
-        StaticShader();
-        ~StaticShader();
+        GeometryShader();
+        ~GeometryShader();
 
         void LoadTime(float time);
         void LoadResolution(const glm::vec2 &resolution);
         void LoadCameraViewMatrix(const glm::mat4 &viewMatrix);
+        void LoadTransformMatrix(const glm::mat4 &transformMatrix);
+
         void LoadTextureVolume(int texture);
- 
+        void LoadTextureMaterial(int texture);
     protected:
         void GetAllUniformLocation();
 
@@ -23,7 +25,10 @@ class StaticShader : public ShaderProgram {
         int loc_Time;
         int loc_Resolution;
         int loc_cameraViewMatrix;
+        int loc_transformMatrix;
+
         int loc_textureVolume;
+        int loc_textureMaterial; 
 };
 
-#endif /* !STATICSHADER_HPP_ */
+#endif /* !GEOMETRYSHADER_HPP_ */

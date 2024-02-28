@@ -4,7 +4,8 @@
 #define SIMPLERENDERER_HPP_
 
 #include "Include.hpp"
-#include "Shader/StaticShader/StaticShader.hpp"
+#include "Shader/GeometryShader/GeometryShader.hpp"
+#include "Shader/ScreenShader/ScreenShader.hpp"
 #include "Camera.hpp"
 #include "ImGuiLayer.hpp"
 
@@ -21,8 +22,10 @@ public:
 
     GLuint _gBuffer;
     GLuint _gAlbedo, _gNormal, _gPosition, _gDepth;
-    StaticShader _Shader;
-    GLuint _TextureShape;
+    GLuint _finalBuffer;
+    GLuint _finalTexture;
+    GeometryShader _GeometryShader;
+    ScreenShader _ScreenShader;
 private:
     GLuint _EmptyVAO;
 
