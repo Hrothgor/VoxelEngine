@@ -38,7 +38,7 @@ void Shape::Build()
 	{
 		if (noiseVolume[i] > 0.0)
 		{
-			_Data[i] = rand() % 10 + 1;
+			_Data[i] = (rand() % 10 + 1) + 3; // +3 because two level of mimap, if data == 1 instead of 4 we lose the 1 in the 2nd level
 		}
 		else
 		{
@@ -84,7 +84,7 @@ void Shape::GenTexture()
     // load material into a 2D texture
 	glGenTextures(1, &_MaterialTexture);
     glBindTexture(GL_TEXTURE_2D, _MaterialTexture);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_R16F, 8, 255, 0, GL_RED, GL_FLOAT, _MaterialPalette);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_R16F, 8, MAX_MATERIALS, 0, GL_RED, GL_FLOAT, _MaterialPalette);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -96,7 +96,7 @@ void Shape::GenTexture()
 
 void Shape::SetMaterial(int index, const Material &material)
 {
-	if (index < 0 || index > 255)
+	if (index < 0 || index > MAX_MATERIALS)
 	{
 		Logger::Get()->Log(Logger::ERROR, "Material index out of range: %d", index);
 		return;

@@ -92,6 +92,7 @@ HitInfo TraverseVolume(Ray ray, float MaxRayDistance)
             t += tDelta * axis;
             currentPos += ivec3(step * axis);
         } else { // solid
+            current -= 3; // sub 3 to get mat 0, bacause our data is in range 4-255, because mimap level 2 (4*4*4) would make 1/2/3 == 0 when rounding
             vec3 color = vec3(
                 texelFetch(iMaterialPalette, ivec2(0, current - 1), 0).r,
                 texelFetch(iMaterialPalette, ivec2(1, current - 1), 0).r,

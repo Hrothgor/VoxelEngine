@@ -7,6 +7,8 @@
 #include "Transform.hpp"
 #include "Material.hpp"
 
+#define MAX_MATERIALS 252
+
 class Shape {
 public:
     Shape(int size = 256);
@@ -29,7 +31,7 @@ private:
     std::vector<int8_t> _Data; // 0 = empty, 1 = full
 
     Transform _Transform;
-    Material _MaterialPalette[255];
+    Material _MaterialPalette[MAX_MATERIALS];
 
     GLuint _VolumeTexture = 0;
     GLuint _MaterialTexture = 0;

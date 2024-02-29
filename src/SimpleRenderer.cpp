@@ -18,8 +18,26 @@ SimpleRenderer::~SimpleRenderer()
 
 Shape shape(256);
 
+GLuint _TestMipmap;
+
 void SimpleRenderer::Init(GLFWwindow* window)
 {
+    // GENERATE 2 MIPMAP LEVEL
+    int8_t data[512 * 512];
+    for (int i = 0; i < 512 * 512; i++)
+    {
+        data[i] = (i % 16) == 0 ? 5 : 0;
+    }
+    glGenTextures(1, &_TestMipmap);
+    glBindTexture(GL_TEXTURE_2D, _TestMipmap);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, 512, 512, 0, GL_RED, GL_UNSIGNED_BYTE, data);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 2);
+    glGenerateMipmap(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, 0);
+    //
+
     glGenVertexArrays(1, &_EmptyVAO);
 
     shape.Build();
