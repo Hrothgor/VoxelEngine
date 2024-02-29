@@ -1,9 +1,23 @@
-[21:54:31] SUCCESS: Window created successfully
-[21:54:31] INFO: OpenGL version: 4.3.0 NVIDIA 536.23
-[21:54:31] INFO: Shape built --------
-[21:54:31] INFO: 	Size:  256
-[21:54:31] INFO: 	Max size:     16777216
-[21:54:31] INFO: 	Memory size (KB): 16384 KB
-[21:54:31] INFO: 	Memory size (MB): 16 MB
-[21:54:31] INFO: -----------------
-[21:54:31] INFO: Time to build Shape with noise: 204.523 ms
+[14:29:23] SUCCESS: Window created successfully
+[14:29:23] INFO: OpenGL version: 4.3.0 NVIDIA 537.13
+[14:29:23] INFO: Shape built --------
+[14:29:23] INFO: 	Size:  256
+[14:29:23] INFO: 	Max size:     16777216
+[14:29:23] INFO: 	Memory size (KB): 16384 KB
+[14:29:23] INFO: 	Memory size (MB): 16 MB
+[14:29:23] INFO: -----------------
+[14:29:23] INFO: Time to build Shape with noise: 311.688 ms
+[14:32:14] ERROR: Could not compile shader : src/Shader/GeometryShader/fragmentShader.glsl
+[14:32:14] ERROR: 	0(147) : error C1503: undefined variable "camPos"
+
+[14:32:14] WARNING: Couldn't reload shader
+[14:32:36] SUCCESS: Shader reloaded
+[14:32:46] SUCCESS: Shader reloaded
+[14:35:18] ERROR: Could not compile shader : src/Shader/GeometryShader/fragmentShader.glsl
+[14:35:18] ERROR: 	0(65) : error C1115: unable to find compatible overloaded function "textureSize(sampler3D)"
+
+[14:35:18] WARNING: Couldn't reload shader
+[14:35:35] SUCCESS: Shader reloaded
+[14:35:52] SUCCESS: Shader reloaded
+[14:35:53] SUCCESS: Shader reloaded
+[14:37:00] SUCCESS: Shader reloaded

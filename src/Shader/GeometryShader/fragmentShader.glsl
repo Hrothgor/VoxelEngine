@@ -1,10 +1,5 @@
 #version 430 core
 
-struct Ray {
-    vec3 origin;
-    vec3 direction;
-};
-
 in vec2 uv;
 
 uniform float iTime;
@@ -19,6 +14,11 @@ layout (location = 0) out vec4 gAlbedo;
 layout (location = 1) out vec4 gNormal;
 layout (location = 2) out vec4 gPosition;
 layout (location = 3) out vec4 gDepth;
+
+struct Ray {
+    vec3 origin;
+    vec3 direction;
+};
 
 bool intersectRayAABB(Ray ray, vec3 minBounds, vec3 maxBounds, out vec3 t1, out vec3 t2, out float tMin, out float tMax) {
     vec3 invDirection = 1.0 / ray.direction;
@@ -35,9 +35,7 @@ bool intersectRayAABB(Ray ray, vec3 minBounds, vec3 maxBounds, out vec3 t1, out 
     return tMin <= tMax && tMax > 0.0;
 }
 
-float epsilon = 0.002;
-
-#define SIZE 256
+float epsilon = 0.001;
 
 vec3 CalculateNormals(vec3 hitPosition, vec3 minBounds, vec3 maxBounds)
 { 
@@ -64,7 +62,7 @@ struct HitInfo
 
 HitInfo TraverseVolume(Ray ray, float MaxRayDistance)
 {
-    vec3 volumeSize = vec3(SIZE);
+    vec3 volumeSize = textureSize(iVolume, 0);
 
     vec3 t1, t2;
     float tMin, tMax;
@@ -73,17 +71,18 @@ HitInfo TraverseVolume(Ray ray, float MaxRayDistance)
 
     // DDA algorithm
     vec3 rayStart = ray.origin + ray.direction * max(tMin+0.001, 0.0);
+    vec3 hitPos = rayStart;
     ivec3 currentPos = ivec3(rayStart);
     vec3 step = sign(ray.direction);
-    vec3 inverseDirection = 1.0 / ray.direction;
-    vec3 tDelta = inverseDirection * step;
-    vec3 t = abs((currentPos + max(step, 0.0) - rayStart) * inverseDirection);
-    vec3 hitPos = rayStart;
+    vec3 invDir = 1.0 / ray.direction;
+    vec3 tDelta = invDir * step;
+    vec3 t = abs((currentPos + max(step, 0.0) - rayStart) * invDir);
 
-    while (true)
+    while (length(hitPos - ray.origin) < MaxRayDistance)
     {
         // Check if we are out of bounds if yes break the while loop
-        if (currentPos.x < 0 || currentPos.y < 0 || currentPos.z < 0 || currentPos.x >= SIZE || currentPos.y >= SIZE || currentPos.z >= SIZE)
+        if (currentPos.x < 0 || currentPos.y < 0 || currentPos.z < 0
+        || currentPos.x >= volumeSize.x || currentPos.y >= volumeSize.y || currentPos.z >= volumeSize.z)
             break;
         
         int current = int(texelFetch(iVolume, currentPos, 0).r * 255.0);
@@ -114,31 +113,33 @@ HitInfo TraverseVolume(Ray ray, float MaxRayDistance)
     );
 }
 
-void main()
+Ray CreateRayFromCamera(float fov)
 {
     vec2 fragCoord = uv * iResolution;
-    
     //camera setup
-	float fov = radians(70.0);
-	float fx = tan(fov / 2.0) / iResolution.x;
+	float rfov = radians(fov);
+	float fx = tan(rfov / 2.0) / iResolution.x;
 	vec2 d = fx * (fragCoord.xy * 2.0 - iResolution.xy);
     // Initial camera direction (z-axis)
 	vec3 camDir = normalize(vec3(d.x, d.y, 1.0));
     // Apply view matrix to camDir
     camDir = (iViewMatrix * vec4(camDir, 0.0)).xyz;
+    camDir = (iTransformMatrix * vec4(camDir, 0.0)).xyz;
     // get pos from view matrix
     vec3 camPos = (iViewMatrix * vec4(0.0, 0.0, 0.0, 1.0)).xyz;
-
     camPos = (iTransformMatrix * vec4(camPos, 1.0)).xyz;
-    camDir = (iTransformMatrix * vec4(camDir, 0.0)).xyz;
 
-	Ray cameraRay = Ray(camPos, camDir);
+    return Ray(camPos, camDir);
+}
 
-	//final color
-    HitInfo hit = TraverseVolume(cameraRay, 150.0);
+void main()
+{
+	Ray ray = CreateRayFromCamera(70.0);
+
+    HitInfo hit = TraverseVolume(ray, 300.0);
 
     gAlbedo = vec4(hit.color, 1.0); // Albdeo
     gNormal = vec4(hit.normal, 1.0); // Normal
     gPosition = vec4(hit.hitPos / 255, 1.0); // Position
-    gDepth = mix(vec4(1.0), vec4(vec3(length(hit.hitPos - camPos) / 400), 1.0), int(hit.hit)); // Depth FAR == 400
+    gDepth = mix(vec4(1.0), vec4(vec3(length(hit.hitPos - ray.origin) / 400), 1.0), int(hit.hit)); // Depth FAR == 400
 }
