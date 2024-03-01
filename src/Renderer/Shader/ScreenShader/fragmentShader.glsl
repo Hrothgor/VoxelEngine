@@ -10,40 +10,6 @@ uniform sampler2D iDepth;
 
 out vec4 fragColor;
 
-vec3 MultiSampleFromTexture(sampler2D tex, vec2 uv, vec2 resolution, int samples)
-{
-    vec3 result = vec3(0.0);
-    for (int i = 0; i < samples; i++)
-    {
-        vec2 offset = vec2(float(i % 2) / resolution.x, float(i / 2) / resolution.y);
-        result += texture(tex, uv + offset).rgb;
-    }
-    return result / float(samples);
-}
-
-// void main()
-// {
-//     vec2 fragCoord = uv * iResolution;
-
-//     // Display iAlbedo with his 2 mipamp level, it size is 512*512
-//     if (fragCoord.x < 512 && fragCoord.y < 512)
-//     {
-//         fragColor = vec4(vec3(texelFetch(iAlbedo, ivec2(fragCoord), 0).r * 255.0), 1.0);
-//         return;
-//     }
-//     if (fragCoord.x < 512 + 256 && fragCoord.y < 512 + 256 && fragCoord.x > 512 && fragCoord.y > 512)
-//     {
-//         fragColor = vec4(vec3(texelFetch(iAlbedo, ivec2(fragCoord - vec2(512, 512)), 1).r * 255.0), 1.0);
-//         return;
-//     }
-//     if (fragCoord.x < 512 + 256 + 128 && fragCoord.y < 512 + 256 + 128 && fragCoord.x > 512 + 256 && fragCoord.y > 512 + 256)
-//     {
-//         fragColor = vec4(vec3(texelFetch(iAlbedo, ivec2(fragCoord - vec2(512 + 256, 512 + 256)), 2).r * 255.0), 1.0);
-//         return;
-//     }
-//     fragColor = vec4(0.0, 1.0, 0.08, 0.2);
-// }
-
 void main()
 {
     vec2 fragCoord = uv * iResolution;

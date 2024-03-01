@@ -1,22 +1,22 @@
 #pragma once
 
-#ifndef VIEWPORTPANEL_HPP_
-#define VIEWPORTPANEL_HPP_
+#ifndef DEBUGPANEL_HPP_
+#define DEBUGPANEL_HPP_
 
 #include "Include.hpp"
 #include "ImGuiPanel.hpp"
 
-class ViewportPanel : public ImGuiPanel {
+class DebugPanel : public ImGuiPanel {
     public:
-        ViewportPanel();
-        ~ViewportPanel();
+        DebugPanel();
+        ~DebugPanel();
 
         virtual void Start() override {};
-        virtual void End() override {};
+        virtual void Stop() override {};
 
         virtual void BeginFrame() override {};
         virtual void ImGuiRender() override;
         virtual void EndFrame() override {};
 };
 
-#endif /* !VIEWPORTPANEL_HPP_ */
+#endif /* !DEBUGPANEL_HPP_ */

@@ -5,9 +5,16 @@
 
 #include "Include.hpp"
 #include "Transform.hpp"
-#include "Material.hpp"
 
 #define MAX_MATERIALS 252
+
+struct Material {
+    glm::vec4 color = glm::vec4(0.0, 0.0, 0.0, 0.0);
+    float reflectivity = 0.0;
+    float roughness = 0.0;
+    float metallic = 0.0;
+    float emmisive = 0.0;
+};
 
 class Shape {
 public:

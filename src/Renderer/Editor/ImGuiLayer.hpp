@@ -12,7 +12,7 @@ class ImGuiLayer {
         ~ImGuiLayer();
 
         void Start(GLFWwindow* window);
-        void End();
+        void Stop();
 
         void ImGuiRenderDockSpace();
 
@@ -22,7 +22,7 @@ class ImGuiLayer {
 
     protected:
     private:
-        std::vector<std::unique_ptr<ImGuiPanel>> _panels;
+        std::vector<std::unique_ptr<ImGuiPanel>> _Panels;
 };
 
 #endif /* !IMGUILAYER_HPP_ */

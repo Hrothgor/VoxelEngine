@@ -1,9 +1,9 @@
-[16:35:10] SUCCESS: Window created successfully
-[16:35:10] INFO: OpenGL version: 4.3.0 NVIDIA 537.13
-[16:35:10] INFO: Shape built --------
-[16:35:10] INFO: 	Size:  256
-[16:35:10] INFO: 	Max size:     16777216
-[16:35:10] INFO: 	Memory size (KB): 16384 KB
-[16:35:10] INFO: 	Memory size (MB): 16 MB
-[16:35:10] INFO: -----------------
-[16:35:10] INFO: Time to build Shape with noise: 310.416 ms
+[19:42:15] SUCCESS: Window created successfully
+[19:42:15] INFO: OpenGL version: 4.3.0 NVIDIA 536.23
+[19:42:15] INFO: Shape built --------
+[19:42:15] INFO: 	Size:  256
+[19:42:15] INFO: 	Max size:     16777216
+[19:42:15] INFO: 	Memory size (KB): 16384 KB
+[19:42:15] INFO: 	Memory size (MB): 16 MB
+[19:42:15] INFO: -----------------
+[19:42:15] INFO: Time to build Shape with noise: 224.258 ms

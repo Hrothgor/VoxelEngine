@@ -17,24 +17,28 @@ ShaderProgram::~ShaderProgram()
 {
 }
 
-void ShaderProgram::Start() const
+void ShaderProgram::Start()
 {
-    glUseProgram(_programID);
 }
 
-void ShaderProgram::Stop() const
+void ShaderProgram::Stop()
 {
     glUseProgram(0);
-}
-
-void ShaderProgram::Destroy() const
-{
-    Stop();
     glDetachShader(_programID, _vertexShaderID);
     glDetachShader(_programID, _fragmentShaderID);
     glDeleteShader(_vertexShaderID);
     glDeleteShader(_fragmentShaderID);
     glDeleteProgram(_programID);
+}
+
+void ShaderProgram::Begin()
+{
+    glUseProgram(_programID);
+}
+
+void ShaderProgram::End()
+{
+    glUseProgram(0);
 }
 
 int ShaderProgram::LoadShader(const std::string &file, unsigned int type) const

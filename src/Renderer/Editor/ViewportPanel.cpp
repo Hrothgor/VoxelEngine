@@ -1,5 +1,5 @@
 #include "ViewportPanel.hpp"
-#include "SimpleRenderer.hpp"
+#include "Renderer/Renderer.hpp"
 
 ViewportPanel::ViewportPanel() {
 }
@@ -14,7 +14,7 @@ void ViewportPanel::ImGuiRender() {
     bool isFocus = ImGui::IsWindowFocused() || ImGui::IsWindowHovered();
 
     ImVec2 size = ImGui::GetContentRegionAvail();
-    ImGui::Image((ImTextureID)SimpleRenderer::Get()->_finalTexture, size, ImVec2 {0, 1}, ImVec2 {1, 0});
+    ImGui::Image((ImTextureID)(size_t)Renderer::Get()->GetScreenTexture(), size, ImVec2 {0, 1}, ImVec2 {1, 0});
 
     ImGui::End();
     ImGui::PopStyleVar();

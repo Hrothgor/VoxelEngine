@@ -61,6 +61,13 @@ void Shape::Build()
 
 void Shape::GenTexture()
 {
+	// Check if size is divisible by 4
+	if (_Size % 4 != 0)
+	{
+		Logger::Get()->Log(Logger::ERROR, "Size of the shape is not divisible by 4");
+		return;
+	}
+
 	if (_VolumeTexture != 0)
 	{
 		glDeleteTextures(1, &_VolumeTexture);
@@ -74,11 +81,14 @@ void Shape::GenTexture()
     glGenTextures(1, &_VolumeTexture);
     glBindTexture(GL_TEXTURE_2D, _VolumeTexture);
     glTexImage3D(GL_TEXTURE_3D, 0, GL_R8, _Size, _Size, _Size, 0, GL_RED, GL_UNSIGNED_BYTE, _Data.data());
-    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_NEAREST_MIPMAP_NEAREST);
     glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_BASE_LEVEL, 0);
+    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAX_LEVEL, 2);
+	glGenerateMipmap(GL_TEXTURE_3D);
     glBindTexture(GL_TEXTURE_3D, 0);
 
     // load material into a 2D texture

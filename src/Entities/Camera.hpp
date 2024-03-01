@@ -26,8 +26,8 @@ class Camera {
 
     protected:
     private:
-        glm::vec3 _position = {-10.0f, 60.0f ,-10.0f};
-        glm::vec3 _rotation = {-10.0f, -30.0f, .0f}; //pitch yaw roll
+        glm::vec3 _position = {400.0f, 190.0f, 190.0f};
+        glm::vec3 _rotation = {-10.0f, -250.0f, 0.0f}; //pitch yaw roll
         glm::mat4 _viewMatrix;
 
         float _moveSpeed = 30.0;

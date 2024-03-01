@@ -1,79 +1,59 @@
-#include "SimpleRenderer.hpp"
+#include "Renderer/Renderer.hpp"
 #include "Engine.hpp"  
 #include "Logger.hpp"
-#include "Shape.hpp"
+#include "Entities/Shape.hpp"
+#include "Entities/Camera.hpp"
 
-SimpleRenderer *SimpleRenderer::instance = nullptr;
+Renderer *Renderer::instance = nullptr;
 
-SimpleRenderer::SimpleRenderer()
+Renderer::Renderer()
 {
 }
 
-SimpleRenderer::~SimpleRenderer()
+Renderer::~Renderer()
 {
-    _GeometryShader.Destroy();
-    _ScreenShader.Destroy();
-    _ImGuiLayer.End();
 }
 
 Shape shape(256);
 
-GLuint _TestMipmap;
-
-void SimpleRenderer::Init(GLFWwindow* window)
+void Renderer::Start(GLFWwindow* window)
 {
-    // GENERATE 2 MIPMAP LEVEL
-    int8_t data[512 * 512];
-    for (int i = 0; i < 512 * 512; i++)
-    {
-        data[i] = (i % 16) == 0 ? 5 : 0;
-    }
-    glGenTextures(1, &_TestMipmap);
-    glBindTexture(GL_TEXTURE_2D, _TestMipmap);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, 512, 512, 0, GL_RED, GL_UNSIGNED_BYTE, data);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 2);
-    glGenerateMipmap(GL_TEXTURE_2D);
-    glBindTexture(GL_TEXTURE_2D, 0);
-    //
-
     glGenVertexArrays(1, &_EmptyVAO);
 
     shape.Build();
     shape.GenTexture();
 
     // Create gBuffer and texture to render to it
-    glGenFramebuffers(1, &_gBuffer);
-    glBindFramebuffer(GL_FRAMEBUFFER, _gBuffer);
+    glGenFramebuffers(1, &_GBuffer);
+    glBindFramebuffer(GL_FRAMEBUFFER, _GBuffer);
     // - albedo color buffer
-    glGenTextures(1, &_gAlbedo);
-    glBindTexture(GL_TEXTURE_2D, _gAlbedo);
+    glGenTextures(1, &_TAlbedo);
+    glBindTexture(GL_TEXTURE_2D, _TAlbedo);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 1920, 1080, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, _gAlbedo, 0);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, _TAlbedo, 0);
     // - normal color buffer
-    glGenTextures(1, &_gNormal);
-    glBindTexture(GL_TEXTURE_2D, _gNormal);
+    glGenTextures(1, &_TNormal);
+    glBindTexture(GL_TEXTURE_2D, _TNormal);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 1920, 1080, 0, GL_RGBA, GL_BYTE, NULL);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, _gNormal, 0);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, _TNormal, 0);
     // - position color buffer
-    glGenTextures(1, &_gPosition);
-    glBindTexture(GL_TEXTURE_2D, _gPosition);
+    glGenTextures(1, &_TPosition);
+    glBindTexture(GL_TEXTURE_2D, _TPosition);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 1920, 1080, 0, GL_RGBA, GL_FLOAT, NULL);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, _gPosition, 0);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, _TPosition, 0);
     // - depth color buffer
-    glGenTextures(1, &_gDepth);
-    glBindTexture(GL_TEXTURE_2D, _gDepth);
+    glGenTextures(1, &_TDepth);
+    glBindTexture(GL_TEXTURE_2D, _TDepth);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 1920, 1080, 0, GL_RGBA, GL_FLOAT, NULL);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT3, GL_TEXTURE_2D, _gDepth, 0);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT3, GL_TEXTURE_2D, _TDepth, 0);
 
     unsigned int attachments[4] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2, GL_COLOR_ATTACHMENT3 };
     glDrawBuffers(4, attachments);
@@ -83,46 +63,38 @@ void SimpleRenderer::Init(GLFWwindow* window)
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glBindTexture(GL_TEXTURE_2D, 0);
 
-    // Create finalBuffer and texture to render to it
-    glGenFramebuffers(1, &_finalBuffer);
-    glBindFramebuffer(GL_FRAMEBUFFER, _finalBuffer);
-    // - final color buffer
-    glGenTextures(1, &_finalTexture);
-    glBindTexture(GL_TEXTURE_2D, _finalTexture);
+    // Create ScreenBuffer and texture to render to it
+    glGenFramebuffers(1, &_ScreenBuffer);
+    glBindFramebuffer(GL_FRAMEBUFFER, _ScreenBuffer);
+    // - Screen color buffer
+    glGenTextures(1, &_ScreenTexture);
+    glBindTexture(GL_TEXTURE_2D, _ScreenTexture);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 1920, 1080, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, _finalTexture, 0);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, _ScreenTexture, 0);
 
     glDrawBuffer(GL_COLOR_ATTACHMENT0);
 
     if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-        Logger::Get()->Log(Logger::LogType::ERROR, "ERROR::FRAMEBUFFER:: FinalFramebuffer is not complete!");
+        Logger::Get()->Log(Logger::LogType::ERROR, "ERROR::FRAMEBUFFER:: ScreenFramebuffer is not complete!");
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glBindTexture(GL_TEXTURE_2D, 0);
     
     _ImGuiLayer.Start(window);
 }
 
-void SimpleRenderer::StartFrame()
+void Renderer::Render()
 {
-    glEnable(GL_MULTISAMPLE);
-    glClearColor(1.00f, 0.49f, 0.04f, 1.00f);
+    glClearColor(0.0f, 0.0f, 0.0f, 1.00f);
     glViewport(0, 0, 1920, 1080);
-}
 
-void SimpleRenderer::EndFrame()
-{
-}
-
-void SimpleRenderer::DrawFullScreenTriangle(const Camera &camera)
-{
     _ImGuiLayer.BeginFrame();
     _ImGuiLayer.ImGuiRender();
     _ImGuiLayer.EndFrame();
 
     {
-        glBindFramebuffer(GL_FRAMEBUFFER, _gBuffer);
+        glBindFramebuffer(GL_FRAMEBUFFER, _GBuffer);
         glClear(GL_COLOR_BUFFER_BIT);
 
         glActiveTexture(GL_TEXTURE0);
@@ -130,12 +102,12 @@ void SimpleRenderer::DrawFullScreenTriangle(const Camera &camera)
         glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_2D, shape.GetMaterialTexture());
 
-        _GeometryShader.Start();
+        _GeometryShader.Begin();
         _GeometryShader.LoadTime(glfwGetTime());
         GLint ViewportSize[4];
         glGetIntegerv(GL_VIEWPORT, ViewportSize);
         _GeometryShader.LoadResolution(glm::vec2(ViewportSize[2], ViewportSize[3]));
-        _GeometryShader.LoadCameraViewMatrix(camera.GetViewMatrix());
+        _GeometryShader.LoadCameraViewMatrix(Engine::Get()->GetMainCamera()->GetViewMatrix());
         _GeometryShader.LoadTransformMatrix(shape.GetTransform().GetTransformMatrix());
         _GeometryShader.LoadTextureVolume(0);
         _GeometryShader.LoadTextureMaterial(1);
@@ -144,26 +116,26 @@ void SimpleRenderer::DrawFullScreenTriangle(const Camera &camera)
         glDrawArrays(GL_TRIANGLES, 0, 3);
         glBindVertexArray(0);
 
-        _GeometryShader.Stop();
+        _GeometryShader.End();
 
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
         glBindTexture(GL_TEXTURE_3D, 0);
     }
 
     {
-        glBindFramebuffer(GL_FRAMEBUFFER, _finalBuffer);
+        glBindFramebuffer(GL_FRAMEBUFFER, _ScreenBuffer);
         glClear(GL_COLOR_BUFFER_BIT);
 
         glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, _gAlbedo);
+        glBindTexture(GL_TEXTURE_2D, _TAlbedo);
         glActiveTexture(GL_TEXTURE1);
-        glBindTexture(GL_TEXTURE_2D, _gNormal);
+        glBindTexture(GL_TEXTURE_2D, _TNormal);
         glActiveTexture(GL_TEXTURE2);
-        glBindTexture(GL_TEXTURE_2D, _gPosition);
+        glBindTexture(GL_TEXTURE_2D, _TPosition);
         glActiveTexture(GL_TEXTURE3);
-        glBindTexture(GL_TEXTURE_2D, _gDepth);
+        glBindTexture(GL_TEXTURE_2D, _TDepth);
 
-        _ScreenShader.Start();
+        _ScreenShader.Begin();
         GLint ViewportSize[4];
         glGetIntegerv(GL_VIEWPORT, ViewportSize);
         _ScreenShader.LoadResolution(glm::vec2(ViewportSize[2], ViewportSize[3]));
@@ -176,9 +148,16 @@ void SimpleRenderer::DrawFullScreenTriangle(const Camera &camera)
         glDrawArrays(GL_TRIANGLES, 0, 3);
         glBindVertexArray(0);
 
-        _ScreenShader.Stop();
+        _ScreenShader.End();
 
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
         glBindTexture(GL_TEXTURE_2D, 0);
     }
+}
+
+void Renderer::Stop()
+{
+    _GeometryShader.Stop();
+    _ScreenShader.Stop();
+    _ImGuiLayer.Stop();
 }

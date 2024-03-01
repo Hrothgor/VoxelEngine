@@ -4,7 +4,7 @@
 #define SCREENSHADER_HPP_
 
 #include "Include.hpp"
-#include "Shader/ShaderProgram.hpp"
+#include "Renderer/Shader/ShaderProgram.hpp"
 
 class ScreenShader : public ShaderProgram {
     public:

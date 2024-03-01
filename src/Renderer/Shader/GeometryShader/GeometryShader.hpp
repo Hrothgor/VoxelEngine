@@ -4,7 +4,7 @@
 #define GEOMETRYSHADER_HPP_
 
 #include "Include.hpp"
-#include "Shader/ShaderProgram.hpp"
+#include "Renderer/Shader/ShaderProgram.hpp"
 
 class GeometryShader : public ShaderProgram {
     public:

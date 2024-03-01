@@ -10,9 +10,11 @@ class ShaderProgram {
         ShaderProgram(const std::string &vertexFile, const std::string &fragmentFile);
         ~ShaderProgram();
 
-        void Start() const;
-        void Stop() const;
-        void Destroy() const;
+        void Start();
+        void Stop();
+
+        void Begin();
+        void End();
 
         void Reload();
     protected:

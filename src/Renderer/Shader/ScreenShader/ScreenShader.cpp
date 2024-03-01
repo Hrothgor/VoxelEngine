@@ -7,7 +7,7 @@
 
 #include "ScreenShader.hpp"
 
-ScreenShader::ScreenShader() : ShaderProgram("src/Shader/ScreenShader/vertexShader.glsl", "src/Shader/ScreenShader/fragmentShader.glsl")
+ScreenShader::ScreenShader() : ShaderProgram("src/Renderer/Shader/ScreenShader/vertexShader.glsl", "src/Renderer/Shader/ScreenShader/fragmentShader.glsl")
 {
     GetAllUniformLocation();
 }

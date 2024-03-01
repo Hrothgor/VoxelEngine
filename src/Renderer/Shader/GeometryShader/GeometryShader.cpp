@@ -7,7 +7,7 @@
 
 #include "GeometryShader.hpp"
 
-GeometryShader::GeometryShader() : ShaderProgram("src/Shader/GeometryShader/vertexShader.glsl", "src/Shader/GeometryShader/fragmentShader.glsl")
+GeometryShader::GeometryShader() : ShaderProgram("src/Renderer/Shader/GeometryShader/vertexShader.glsl", "src/Renderer/Shader/GeometryShader/fragmentShader.glsl")
 {
     GetAllUniformLocation();
 }

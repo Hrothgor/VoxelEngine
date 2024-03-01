@@ -6,9 +6,9 @@
 
 ImGuiLayer::ImGuiLayer()
 {
-	_panels.push_back(std::make_unique<DebugPanel>());
-	_panels.push_back(std::make_unique<ViewportPanel>());
-	_panels.push_back(std::make_unique<LogPanel>());
+	_Panels.push_back(std::make_unique<DebugPanel>());
+	_Panels.push_back(std::make_unique<ViewportPanel>());
+	_Panels.push_back(std::make_unique<LogPanel>());
 }
 
 ImGuiLayer::~ImGuiLayer()
@@ -55,17 +55,17 @@ void ImGuiLayer::Start(GLFWwindow* window)
 		colors[ImGuiCol_TitleBgActive] = ImVec4{ 0.15f, 0.1505f, 0.151f, 1.0f };
 		colors[ImGuiCol_TitleBgCollapsed] = ImVec4{ 0.15f, 0.1505f, 0.151f, 1.0f };
 
-	for (auto& panel : _panels)
+	for (auto& panel : _Panels)
 	{
 		panel->Start();
 	}
 }
 
-void ImGuiLayer::End()
+void ImGuiLayer::Stop()
 {
-	for (auto& panel : _panels)
+	for (auto& panel : _Panels)
 	{
-		panel->End();
+		panel->Stop();
 	}
 
 	ImGui_ImplOpenGL3_Shutdown();
@@ -79,7 +79,7 @@ void ImGuiLayer::BeginFrame()
 	ImGui_ImplGlfw_NewFrame();
 	ImGui::NewFrame();
 
-	for (auto& panel : _panels)
+	for (auto& panel : _Panels)
 	{
 		panel->BeginFrame();
 	}
@@ -125,7 +125,7 @@ void ImGuiLayer::ImGuiRender()
 {
 	ImGuiRenderDockSpace();
 
-	for (auto& panel : _panels)
+	for (auto& panel : _Panels)
 	{
 		panel->ImGuiRender();
 	}
@@ -133,7 +133,7 @@ void ImGuiLayer::ImGuiRender()
 
 void ImGuiLayer::EndFrame()
 {
-	for (auto& panel : _panels)
+	for (auto& panel : _Panels)
 	{
 		panel->EndFrame();
 	}

@@ -35,7 +35,7 @@ bool intersectRayAABB(Ray ray, vec3 minBounds, vec3 maxBounds, out vec3 t1, out 
     return tMin <= tMax && tMax > 0.0;
 }
 
-float epsilon = 0.001;
+float epsilon = 0.0015;
 
 vec3 CalculateNormals(vec3 hitPosition, vec3 minBounds, vec3 maxBounds)
 { 
@@ -78,14 +78,17 @@ HitInfo TraverseVolume(Ray ray, float MaxRayDistance)
     vec3 tDelta = invDir * step;
     vec3 t = abs((currentPos + max(step, 0.0) - rayStart) * invDir);
 
+    int mipmapLevel = 0;
+
     while (length(hitPos - ray.origin) < MaxRayDistance)
     {
+        vec3 bounds = vec3(0.0) + (volumeSize / (1 << mipmapLevel));
         // Check if we are out of bounds if yes break the while loop
         if (currentPos.x < 0 || currentPos.y < 0 || currentPos.z < 0
-        || currentPos.x >= volumeSize.x || currentPos.y >= volumeSize.y || currentPos.z >= volumeSize.z)
+        || currentPos.x >= bounds.x || currentPos.y >= bounds.y || currentPos.z >= bounds.z)
             break;
         
-        int current = int(texelFetch(iVolume, currentPos, 0).r * 255.0);
+        int current = int(texelFetch(iVolume, (currentPos / (1 << mipmapLevel)), mipmapLevel).r * 255.0);
         if (current == 0) { // air
             hitPos = rayStart + min(t.x, min(t.y, t.z)) * ray.direction;
             vec3 axis = nextAxis(t);

@@ -1,5 +1,6 @@
 #include "Logger.hpp"
 #include <fstream>
+#include <cstdarg>
     
 Logger *Logger::instance = nullptr;
 

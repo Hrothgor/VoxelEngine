@@ -5,17 +5,47 @@
 
 #include "Include.hpp"
 
+class Camera;
+class Shape;
+
 class Engine {
     public:
         Engine();
         ~Engine();
 
-        void Update(GLFWwindow *window);
+        void Start();
+        void Update();
+        void Stop();
 
-        float GetDeltaTime() const;
-        int GetFPS() const;
+// WINDOW
+public:
+    GLFWwindow *GetWindow() { return _Window; }
+    int GetWidth() const { return _Width; }
+    int GetHeight() const { return _Height; }
+    void SetWidth(int width) { _Width = width; }
+    void SetHeight(int height) { _Height = height; }
+    std::string GetTitle() const { return _Title; }
+    bool GetVSync() const { return _VSync; }
+    void SetVSync(bool vsync) { _VSync = vsync; glfwSwapInterval(_VSync); }
+private:
+    GLFWwindow *_Window;
+    int _Width, _Height;
+    std::string _Title;
+    bool _VSync;
 
-    protected:
+// SHAPES
+    std::vector<std::shared_ptr<Shape>> _shapes;
+
+// MainCamera
+    public:
+        std::shared_ptr<Camera> GetMainCamera() { return _MainCamera; }
+    private:
+        std::shared_ptr<Camera> _MainCamera;
+
+// TIME
+    public:
+        float GetDeltaTime() const { return _deltaTime; }
+        int GetFPS() const { return _fps; }
     private:
         float _deltaTime;
         float _lastFrame;
