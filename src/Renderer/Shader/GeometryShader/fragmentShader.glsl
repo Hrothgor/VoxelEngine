@@ -35,12 +35,17 @@ bool intersectRayAABB(Ray ray, vec3 minBounds, vec3 maxBounds, out vec3 t1, out 
     return tMin <= tMax && tMax > 0.0;
 }
 
-float epsilon = 0.0015;
-
 vec3 CalculateNormals(vec3 hitPosition, vec3 minBounds, vec3 maxBounds)
 { 
-    vec3 normal = step(minBounds, hitPosition - epsilon) - step(hitPosition + epsilon, maxBounds);
-    return normalize(normal);
+    vec3 center = (minBounds + maxBounds) / 2.0;
+    vec3 pos = hitPosition - center;
+    vec3 d = (maxBounds - minBounds) / 2.0;
+    float bias = 1.0002;
+    return normalize(vec3(
+        int(pos.x / d.x * bias),
+        int(pos.y / d.y * bias),
+        int(pos.z / d.z * bias)
+    ));
 }
 
 vec3 nextAxis(vec3 t)
@@ -144,6 +149,6 @@ void main()
 
     gAlbedo = vec4(hit.color, 1.0); // Albdeo
     gNormal = vec4(hit.normal, 1.0); // Normal
-    gPosition = vec4(hit.hitPos / 255, 1.0); // Position
+    gPosition = vec4(hit.hitPos, 1.0); // Position
     gDepth = mix(vec4(1.0), vec4(vec3(length(hit.hitPos - ray.origin) / 400), 1.0), int(hit.hit)); // Depth FAR == 400
 }

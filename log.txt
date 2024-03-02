@@ -1,5 +1,11 @@
-[01:15:32] SUCCESS: Window created successfully
-[01:15:32] INFO: OpenGL version: 4.3.0 NVIDIA 536.23
-[01:15:32] INFO: Loading .vox file: res/vox/monu3.vox
-[01:15:32] INFO: Version: 200
-[01:15:32] SUCCESS: Successfully loaded .vox file.
+[15:47:25] SUCCESS: Window created successfully
+[15:47:25] INFO: OpenGL version: 4.3.0 NVIDIA 536.23
+[15:47:26] INFO: Loading .vox file: res/vox/monu3.vox
+[15:47:26] INFO: Version: 200
+[15:47:26] SUCCESS: Successfully loaded .vox file.
+[15:47:42] SUCCESS: Shader reloaded
+[15:47:56] SUCCESS: Shader reloaded
+[15:48:42] SUCCESS: Shader reloaded
+[15:48:42] SUCCESS: Shader reloaded
+[15:48:42] SUCCESS: Shader reloaded
+[15:48:42] SUCCESS: Shader reloaded

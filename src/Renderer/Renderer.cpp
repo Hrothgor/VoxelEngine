@@ -139,6 +139,7 @@ void Renderer::Render()
         GLint ViewportSize[4];
         glGetIntegerv(GL_VIEWPORT, ViewportSize);
         _ScreenShader.LoadResolution(glm::vec2(ViewportSize[2], ViewportSize[3]));
+        _ScreenShader.LoadCameraViewMatrix(Engine::Get()->GetMainCamera()->GetViewMatrix());
         _ScreenShader.LoadTextureAlbedo(0);
         _ScreenShader.LoadTextureNormal(1);
         _ScreenShader.LoadTexturePosition(2);

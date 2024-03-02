@@ -12,6 +12,7 @@ class ScreenShader : public ShaderProgram {
         ~ScreenShader();
 
         void LoadResolution(const glm::vec2 &resolution);
+        void LoadCameraViewMatrix(const glm::mat4 &viewMatrix);
         void LoadTextureAlbedo(int texture);
         void LoadTextureNormal(int texture);
         void LoadTexturePosition(int texture);
@@ -22,6 +23,7 @@ class ScreenShader : public ShaderProgram {
 
     private:
         int loc_Resolution;
+        int loc_ViewMatrix;
         int loc_textureAlbedo;
         int loc_textureNormal;
         int loc_texturePosition;
