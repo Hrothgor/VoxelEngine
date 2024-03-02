@@ -8,6 +8,8 @@
 #include "Renderer/Shader/ScreenShader/ScreenShader.hpp"
 #include "Renderer/Editor/ImGuiLayer.hpp"
 
+class Shape;
+
 class Renderer {
 public:
     Renderer();
@@ -16,6 +18,8 @@ public:
     void Start(GLFWwindow* window);
     void Render();
     void Stop();
+
+    Shape *shape;
 
 // GBuffer
 public:

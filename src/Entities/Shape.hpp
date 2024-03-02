@@ -6,7 +6,7 @@
 #include "Include.hpp"
 #include "Transform.hpp"
 
-#define MAX_MATERIALS 252
+#define MAX_MATERIALS 255
 
 struct Material {
     glm::vec4 color = glm::vec4(0.0, 0.0, 0.0, 0.0);
@@ -18,28 +18,38 @@ struct Material {
 
 class Shape {
 public:
-    Shape(int size = 256);
+    Shape();
     ~Shape();
 
-    void Build();
+    void Build(); // TODO: Remove this function
     void GenTexture();
-    
-    int GetSize() const { return _Size; }
-    const std::vector<int8_t>& GetData() const { return _Data; }
 
-    Transform &GetTransform() { return _Transform; }
+// DATA
+public:
+    glm::u16vec3 GetSize() const { return _Size; }
+    void SetSize(const glm::u16vec3 &size) { 
+        _Size = size;
+        _Size.x = std::clamp<int>(_Size.x, 1, 256);
+        _Size.y = std::clamp<int>(_Size.y, 1, 256);
+        _Size.z = std::clamp<int>(_Size.z, 1, 256);
+    }
+    const std::vector<int8_t> &GetData() const { return _Data; }
+    void SetData(const std::vector<int8_t> &data) { _Data = data; }
+
     void SetMaterial(int index, const Material &material);
 
+    Transform &GetTransform() { return _Transform; }
+private:
+    glm::u16vec3 _Size;
+    std::vector<int8_t> _Data; // 0 = empty, 1 = full
+    Material _MaterialPalette[MAX_MATERIALS];
+    Transform _Transform;
+
+// OPENGL
+public:
     GLuint GetVolumeTexture() const { return _VolumeTexture; }
     GLuint GetMaterialTexture() const { return _MaterialTexture; }
-protected:
 private:
-    int _Size;
-    std::vector<int8_t> _Data; // 0 = empty, 1 = full
-
-    Transform _Transform;
-    Material _MaterialPalette[MAX_MATERIALS];
-
     GLuint _VolumeTexture = 0;
     GLuint _MaterialTexture = 0;
 };

@@ -4,6 +4,8 @@
 #include "Entities/Shape.hpp"
 #include "Entities/Camera.hpp"
 
+#include "Loader.hpp"
+
 Renderer *Renderer::instance = nullptr;
 
 Renderer::Renderer()
@@ -14,14 +16,12 @@ Renderer::~Renderer()
 {
 }
 
-Shape shape(256);
-
 void Renderer::Start(GLFWwindow* window)
 {
     glGenVertexArrays(1, &_EmptyVAO);
 
-    shape.Build();
-    shape.GenTexture();
+    shape = Loader::Get()->LoadFromVoxFile("res/vox/monu3.vox");
+    shape->GenTexture();
 
     // Create gBuffer and texture to render to it
     glGenFramebuffers(1, &_GBuffer);
@@ -30,29 +30,29 @@ void Renderer::Start(GLFWwindow* window)
     glGenTextures(1, &_TAlbedo);
     glBindTexture(GL_TEXTURE_2D, _TAlbedo);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 1920, 1080, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, _TAlbedo, 0);
     // - normal color buffer
     glGenTextures(1, &_TNormal);
     glBindTexture(GL_TEXTURE_2D, _TNormal);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 1920, 1080, 0, GL_RGBA, GL_BYTE, NULL);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, _TNormal, 0);
     // - position color buffer
     glGenTextures(1, &_TPosition);
     glBindTexture(GL_TEXTURE_2D, _TPosition);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 1920, 1080, 0, GL_RGBA, GL_FLOAT, NULL);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, _TPosition, 0);
     // - depth color buffer
     glGenTextures(1, &_TDepth);
     glBindTexture(GL_TEXTURE_2D, _TDepth);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 1920, 1080, 0, GL_RGBA, GL_FLOAT, NULL);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT3, GL_TEXTURE_2D, _TDepth, 0);
 
     unsigned int attachments[4] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2, GL_COLOR_ATTACHMENT3 };
@@ -98,9 +98,9 @@ void Renderer::Render()
         glClear(GL_COLOR_BUFFER_BIT);
 
         glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_3D, shape.GetVolumeTexture());
+        glBindTexture(GL_TEXTURE_3D, shape->GetVolumeTexture());
         glActiveTexture(GL_TEXTURE1);
-        glBindTexture(GL_TEXTURE_2D, shape.GetMaterialTexture());
+        glBindTexture(GL_TEXTURE_2D, shape->GetMaterialTexture());
 
         _GeometryShader.Begin();
         _GeometryShader.LoadTime(glfwGetTime());
@@ -108,7 +108,7 @@ void Renderer::Render()
         glGetIntegerv(GL_VIEWPORT, ViewportSize);
         _GeometryShader.LoadResolution(glm::vec2(ViewportSize[2], ViewportSize[3]));
         _GeometryShader.LoadCameraViewMatrix(Engine::Get()->GetMainCamera()->GetViewMatrix());
-        _GeometryShader.LoadTransformMatrix(shape.GetTransform().GetTransformMatrix());
+        _GeometryShader.LoadTransformMatrix(shape->GetTransform().GetTransformMatrix());
         _GeometryShader.LoadTextureVolume(0);
         _GeometryShader.LoadTextureMaterial(1);
 

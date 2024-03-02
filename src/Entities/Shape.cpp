@@ -2,24 +2,8 @@
 #include "Logger.hpp"
 #include <FastNoise/FastNoise.h>
 
-Shape::Shape(int size)
+Shape::Shape()
 {
-	_Size = size;
-	_Size = std::clamp(_Size, 1, 256);
-	_Data.resize(_Size * _Size * _Size, 0);
-
-
-	// Test Material
-	_MaterialPalette[0].color = glm::vec4(0.41, 0.18, 0.02, 1.0);
-	_MaterialPalette[1].color = glm::vec4(0.45, 0.28, 0.16, 1.0);
-	_MaterialPalette[2].color = glm::vec4(0.65, 0.26, 0.12, 1.0);
-	_MaterialPalette[3].color = glm::vec4(0.71, 0.36, 0.13, 1.0);
-	_MaterialPalette[4].color = glm::vec4(0.75, 0.47, 0.14, 1.0);
-	_MaterialPalette[5].color = glm::vec4(0.80, 0.50, 0.16, 1.0);
-	_MaterialPalette[6].color = glm::vec4(0.85, 0.55, 0.20, 1.0);
-	_MaterialPalette[7].color = glm::vec4(0.90, 0.60, 0.25, 1.0);
-	_MaterialPalette[8].color = glm::vec4(0.95, 0.65, 0.30, 1.0);
-	_MaterialPalette[9].color = glm::vec4(1.00, 0.70, 0.35, 1.0);
 }
 
 Shape::~Shape()
@@ -30,15 +14,15 @@ void Shape::Build()
 {
 	auto start = std::chrono::high_resolution_clock::now();
 
-	float *noiseVolume = new float[_Size * _Size * _Size];
+	float *noiseVolume = new float[_Size.x * _Size.y * _Size.z];
 	auto fnPerlin = FastNoise::New<FastNoise::Perlin>();
-	fnPerlin->GenUniformGrid3D(noiseVolume, 0, 0, 0, _Size, _Size, _Size, 0.02, 1337);
+	fnPerlin->GenUniformGrid3D(noiseVolume, 0, 0, 0, _Size.x, _Size.y, _Size.z, 0.02, 1337);
 
-	for (int i = 0; i < _Size * _Size * _Size; i++)
+	for (int i = 0; i < _Size.x * _Size.y * _Size.z; i++)
 	{
 		if (noiseVolume[i] > 0.0)
 		{
-			_Data[i] = (rand() % 10 + 1) + 3; // +3 because two level of mimap, if data == 1 instead of 4 we lose the 1 in the 2nd level
+			_Data[i] = (rand() % 10 + 1); // TODO: +3 because two level of mimap, if data == 1 instead of 4 we lose the 1 in the 2nd level
 		}
 		else
 		{
@@ -49,8 +33,8 @@ void Shape::Build()
 	delete[] noiseVolume;
 
 	Logger::Get()->Log(Logger::INFO, "Shape built --------");
-	Logger::Get()->Log(Logger::INFO, "\tSize:  %d", _Size);
-	Logger::Get()->Log(Logger::INFO, "\tMax size:     %d", _Size * _Size * _Size);
+	Logger::Get()->Log(Logger::INFO, "\tSize: %d %d %d", _Size.x, _Size.y, _Size.z);
+	Logger::Get()->Log(Logger::INFO, "\tMax size:     %d", _Size.x * _Size.y * _Size.z);
 	Logger::Get()->Log(Logger::INFO, "\tMemory size (KB): %d KB", _Data.size() / 1024);
 	Logger::Get()->Log(Logger::INFO, "\tMemory size (MB): %d MB", _Data.size() / 1024 / 1024);
 	Logger::Get()->Log(Logger::INFO, "-----------------");
@@ -62,7 +46,7 @@ void Shape::Build()
 void Shape::GenTexture()
 {
 	// Check if size is divisible by 4
-	if (_Size % 4 != 0)
+	if (_Size.x % 4 != 0 || _Size.y % 4 != 0 || _Size.z % 4 != 0)
 	{
 		Logger::Get()->Log(Logger::ERROR, "Size of the shape is not divisible by 4");
 		return;
@@ -80,15 +64,12 @@ void Shape::GenTexture()
     // load data into a 3D texture
     glGenTextures(1, &_VolumeTexture);
     glBindTexture(GL_TEXTURE_2D, _VolumeTexture);
-    glTexImage3D(GL_TEXTURE_3D, 0, GL_R8, _Size, _Size, _Size, 0, GL_RED, GL_UNSIGNED_BYTE, _Data.data());
+    glTexImage3D(GL_TEXTURE_3D, 0, GL_R8, _Size.x, _Size.y, _Size.z, 0, GL_RED, GL_UNSIGNED_BYTE, _Data.data());
     glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_NEAREST_MIPMAP_NEAREST);
     glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_BASE_LEVEL, 0);
-    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAX_LEVEL, 2);
-	glGenerateMipmap(GL_TEXTURE_3D);
     glBindTexture(GL_TEXTURE_3D, 0);
 
     // load material into a 2D texture

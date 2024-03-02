@@ -1,9 +1,5 @@
-[19:42:15] SUCCESS: Window created successfully
-[19:42:15] INFO: OpenGL version: 4.3.0 NVIDIA 536.23
-[19:42:15] INFO: Shape built --------
-[19:42:15] INFO: 	Size:  256
-[19:42:15] INFO: 	Max size:     16777216
-[19:42:15] INFO: 	Memory size (KB): 16384 KB
-[19:42:15] INFO: 	Memory size (MB): 16 MB
-[19:42:15] INFO: -----------------
-[19:42:15] INFO: Time to build Shape with noise: 224.258 ms
+[01:15:32] SUCCESS: Window created successfully
+[01:15:32] INFO: OpenGL version: 4.3.0 NVIDIA 536.23
+[01:15:32] INFO: Loading .vox file: res/vox/monu3.vox
+[01:15:32] INFO: Version: 200
+[01:15:32] SUCCESS: Successfully loaded .vox file.

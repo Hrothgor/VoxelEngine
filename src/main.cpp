@@ -2,6 +2,8 @@
 #include "Engine.hpp"
 #include "Logger.hpp"
 
+#include "Loader.hpp"
+
 int main()
 {
     srand(time(NULL));

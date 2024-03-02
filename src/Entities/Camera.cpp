@@ -6,6 +6,9 @@
 
 Camera::Camera()
 {
+    _position = {140.0, 50.0, -85.0};
+    _rotation = {-10, 52.0, 0.0};
+
     UpdateViewMatrix();
 
     InputManager::Get()->Bind(GLFW_KEY_W, GLFW_PRESS, InputManager::InputType::KEY, [this](GLFWwindow *window) {
