@@ -85,6 +85,8 @@ void Renderer::Start(GLFWwindow* window)
     _ImGuiLayer.Start(window);
 }
 
+float test = 0.0f;
+
 void Renderer::Render()
 {
     Profiler::Get()->StartFrame("GPU Frame");
@@ -124,7 +126,6 @@ void Renderer::Render()
 
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
         glBindTexture(GL_TEXTURE_3D, 0);
-        glFinish(); // TODO: TAKE THIS OFF, THIS IS FOR ACCURATE GPU PROFILING
         Profiler::Get()->EndFrame();
     }
 
@@ -143,6 +144,7 @@ void Renderer::Render()
         glBindTexture(GL_TEXTURE_2D, _TDepth);
 
         _ScreenShader.Begin();
+        _ScreenShader.LoadTime(glfwGetTime());
         GLint ViewportSize[4];
         glGetIntegerv(GL_VIEWPORT, ViewportSize);
         _ScreenShader.LoadResolution(glm::vec2(ViewportSize[2], ViewportSize[3]));
@@ -160,7 +162,6 @@ void Renderer::Render()
 
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
         glBindTexture(GL_TEXTURE_2D, 0);
-        glFinish(); // TODO: TAKE THIS OFF, THIS IS FOR ACCURATE GPU PROFILING
         Profiler::Get()->EndFrame();
     }
 

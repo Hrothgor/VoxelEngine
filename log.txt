@@ -1,5 +1,5 @@
-[16:24:31] SUCCESS: Window created successfully
-[16:24:31] INFO: OpenGL version: 4.3.0 NVIDIA 536.23
-[16:24:31] INFO: Loading .vox file: res/vox/monu3.vox
-[16:24:31] INFO: Version: 200
-[16:24:31] SUCCESS: Successfully loaded .vox file.
+[20:56:56] SUCCESS: Window created successfully
+[20:56:56] INFO: OpenGL version: 4.3.0 NVIDIA 536.23
+[20:56:56] INFO: Loading .vox file: res/vox/monu3.vox
+[20:56:56] INFO: Version: 200
+[20:56:56] SUCCESS: Successfully loaded .vox file.

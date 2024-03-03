@@ -62,7 +62,7 @@ HitInfo TraverseVolume(Ray ray, float MaxRayDistance)
         return HitInfo(vec3(0.0), vec3(0.0), vec3(0.0), false);
 
     // DDA algorithm
-    vec3 rayStart = ray.origin + ray.direction * max(tMin+0.001, 0.0);
+    vec3 rayStart = ray.origin + ray.direction * (max(tMin, 0.0) + 0.001);
     vec3 hitPos = rayStart;
     ivec3 currentPos = ivec3(rayStart);
     vec3 step = sign(ray.direction);
@@ -71,19 +71,17 @@ HitInfo TraverseVolume(Ray ray, float MaxRayDistance)
     vec3 t = abs((currentPos + max(step, 0.0) - rayStart) * invDir);
     vec3 oldAxis = vec3(0.0);
 
-    int mipmapLevel = 0;
-
     while (length(hitPos - ray.origin) < MaxRayDistance)
     {
-        vec3 bounds = vec3(0.0) + (volumeSize / (1 << mipmapLevel));
+        vec3 bounds = vec3(0.0) + volumeSize;
         // Check if we are out of bounds if yes break the while loop
         if (currentPos.x < 0 || currentPos.y < 0 || currentPos.z < 0
         || currentPos.x >= bounds.x || currentPos.y >= bounds.y || currentPos.z >= bounds.z)
             break;
-        
-        int current = int(texelFetch(iVolume, (currentPos / (1 << mipmapLevel)), mipmapLevel).r * 255.0);
+
+        int current = int(texelFetch(iVolume, currentPos, 0).r * 255.0);
         if (current == 0) { // air
-            hitPos = rayStart + min(t.x, min(t.y, t.z)) * ray.direction;
+            hitPos = rayStart + (min(t.x, min(t.y, t.z)) * 0.9999) * ray.direction;
             vec3 axis = nextAxis(t);
             oldAxis = axis;
             t += tDelta * axis;
@@ -134,6 +132,23 @@ void main()
 	Ray ray = CreateRayFromCamera(70.0);
 
     HitInfo hit = TraverseVolume(ray, 300.0);
+
+    if (hit.hit == true)
+    {
+        // Sun
+        vec3 SunPos = vec3(512.0);
+        // Rotate in X Z around Y
+        SunPos.x = 512.0 * cos(iTime);
+        SunPos.z = 512.0 * sin(iTime);
+        vec3 SunDir = normalize(SunPos);
+        Ray sunRay = Ray(hit.hitPos, SunDir);
+        HitInfo sunHit = TraverseVolume(sunRay, 100.0);
+        if (sunHit.hit == true)
+        {
+            hit.color *= 0.5;
+        }
+    }
+
 
     gAlbedo = vec4(hit.color, 1.0); // Albdeo
     gNormal = vec4(hit.normal, 1.0); // Normal

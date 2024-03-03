@@ -18,12 +18,19 @@ ScreenShader::~ScreenShader()
 
 void ScreenShader::GetAllUniformLocation()
 {
+    loc_Time = GetUniformLocation("iTime");
     loc_Resolution = GetUniformLocation("iResolution");
     loc_ViewMatrix = GetUniformLocation("iViewMatrix");
+
     loc_textureAlbedo = GetUniformLocation("iAlbedo");
     loc_textureNormal = GetUniformLocation("iNormal");
     loc_texturePosition = GetUniformLocation("iPosition");
     loc_textureDepth = GetUniformLocation("iDepth");
+}
+
+void ScreenShader::LoadTime(float time)
+{
+    LoadFloat(loc_Time, time);
 }
 
 void ScreenShader::LoadResolution(const glm::vec2 &resolution)

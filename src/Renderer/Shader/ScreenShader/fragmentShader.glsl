@@ -1,6 +1,8 @@
 #version 430 core
+
 in vec2 uv;
 
+uniform float iTime;
 uniform vec2 iResolution;
 uniform mat4 iViewMatrix;
 
@@ -21,8 +23,10 @@ void main()
     float Depth = texture(iDepth, uv).r;
 
     vec3 SunPos = vec3(512.0);
-    vec3 SunColor = vec3(1.0, 1.0, 1.0);
-    vec3 SunDir = normalize(SunPos);
+    // Rotate in X Z around Y
+    SunPos.x = 512.0 * cos(iTime);
+    SunPos.z = 512.0 * sin(iTime);
+    vec3 SunColor = vec3(1.0, 1.0, 0.54);
 
     // then calculate lighting as usual
     vec3 lighting = Albedo * 0.1; // hard-coded ambient component
@@ -31,8 +35,8 @@ void main()
     // {
         // diffuse
         vec3 lightDir = normalize(SunPos - Position);
-        vec3 diffuse = max(dot(Normal, lightDir), 0.0) * Albedo * SunColor;
-        lighting += diffuse;
+        vec3 diffuse = max(dot(Normal, lightDir), 0.2) * Albedo * (0.3*SunColor);
+        lighting += (diffuse * 4);
     // }
     
     FragColor = vec4(lighting, 1.0);
