@@ -3,14 +3,6 @@
 #include "Entities/Shape.hpp"
 #include "Logger.hpp"
     
-Loader *Loader::instance = nullptr;
-
-Loader::Loader() {
-}
-
-Loader::~Loader() {
-}
-
 Loader::VoxChunkHeader Loader::ReadVoxChunkHeader(std::ifstream &file)
 {
 	VoxChunkHeader chunk;
@@ -112,8 +104,9 @@ Shape *Loader::ConvertVoxToShape(const VoxContent &voxContent)
 	return shape;
 }
 
-Shape *Loader::LoadFromVoxFile(const std::string &path)
+Loader::VoxContent Loader::LoadFromVoxFile(const std::string &path)
 {
+	VoxContent voxContent;
     std::ifstream file(path, std::ios::binary);
 
 	Logger::Get()->Log(Logger::LogType::INFO, "Loading .vox file: %s", path.c_str());
@@ -121,7 +114,7 @@ Shape *Loader::LoadFromVoxFile(const std::string &path)
     if (!file.is_open())
     {
         Logger::Get()->Log(Logger::LogType::ERROR, "Failed to open file: %s", path.c_str());
-        return nullptr;
+        return voxContent;
     }
 
 	// Read header
@@ -129,7 +122,7 @@ Shape *Loader::LoadFromVoxFile(const std::string &path)
     file.read(magic, 4);
     if (magic[0] != 'V' || magic[1] != 'O' || magic[2] != 'X' || magic[3] != ' ') {
         Logger::Get()->Log(Logger::LogType::ERROR, "Invalid .vox format: %s", path.c_str());
-        return nullptr;
+        return voxContent;
     }
 	// Read version
 	uint32_t version;
@@ -141,10 +134,9 @@ Shape *Loader::LoadFromVoxFile(const std::string &path)
 	if (strncmp(mainChunkHeader.Id, "MAIN", 4) != 0)
 	{
 		Logger::Get()->Log(Logger::LogType::ERROR, "Can't find MAIN chunk");
-		return nullptr;
+		return voxContent;
 	}
-
-	VoxContent voxContent;
+	voxContent.NumModels = 1;
 	int currentModelIndex = 0;
 	int currentPos = file.tellg();
 	while (file.tellg() < mainChunkHeader.BytesOfChildren + currentPos)
@@ -176,5 +168,5 @@ Shape *Loader::LoadFromVoxFile(const std::string &path)
 	Logger::Get()->Log(Logger::LogType::SUCCESS, "Successfully loaded .vox file.");
 
     file.close();
-    return ConvertVoxToShape(voxContent);
+    return voxContent;
 }

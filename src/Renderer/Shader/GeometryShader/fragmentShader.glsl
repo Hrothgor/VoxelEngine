@@ -35,19 +35,6 @@ bool intersectRayAABB(Ray ray, vec3 minBounds, vec3 maxBounds, out vec3 t1, out 
     return tMin <= tMax && tMax > 0.0;
 }
 
-vec3 CalculateNormals(vec3 hitPosition, vec3 minBounds, vec3 maxBounds)
-{ 
-    vec3 center = (minBounds + maxBounds) / 2.0;
-    vec3 pos = hitPosition - center;
-    vec3 d = (maxBounds - minBounds) / 2.0;
-    float bias = 1.0002;
-    return normalize(vec3(
-        int(pos.x / d.x * bias),
-        int(pos.y / d.y * bias),
-        int(pos.z / d.z * bias)
-    ));
-}
-
 vec3 nextAxis(vec3 t)
 {
     return vec3(
@@ -82,6 +69,7 @@ HitInfo TraverseVolume(Ray ray, float MaxRayDistance)
     vec3 invDir = 1.0 / ray.direction;
     vec3 tDelta = invDir * step;
     vec3 t = abs((currentPos + max(step, 0.0) - rayStart) * invDir);
+    vec3 oldAxis = vec3(0.0);
 
     int mipmapLevel = 0;
 
@@ -97,10 +85,10 @@ HitInfo TraverseVolume(Ray ray, float MaxRayDistance)
         if (current == 0) { // air
             hitPos = rayStart + min(t.x, min(t.y, t.z)) * ray.direction;
             vec3 axis = nextAxis(t);
+            oldAxis = axis;
             t += tDelta * axis;
             currentPos += ivec3(step * axis);
         } else { // solid
-            // current -= 3; // sub 3 to get mat 0, bacause our data is in range 4-255, because mimap level 2 (4*4*4) would make 1/2/3 == 0 when rounding
             vec3 color = vec3(
                 texelFetch(iMaterialPalette, ivec2(0, current - 1), 0).r,
                 texelFetch(iMaterialPalette, ivec2(1, current - 1), 0).r,
@@ -108,7 +96,7 @@ HitInfo TraverseVolume(Ray ray, float MaxRayDistance)
             );
             return HitInfo(
                 hitPos,
-                CalculateNormals(hitPos, currentPos, currentPos + 1),
+                -oldAxis * step,
                 color,
                 true
             );

@@ -1,6 +1,7 @@
 #include "Renderer/Renderer.hpp"
 #include "Engine.hpp"  
 #include "Logger.hpp"
+#include "Profiler.hpp"
 #include "Entities/Shape.hpp"
 #include "Entities/Camera.hpp"
 
@@ -20,7 +21,7 @@ void Renderer::Start(GLFWwindow* window)
 {
     glGenVertexArrays(1, &_EmptyVAO);
 
-    shape = Loader::Get()->LoadFromVoxFile("res/vox/monu3.vox");
+    shape = Loader::ConvertVoxToShape(Loader::LoadFromVoxFile("res/vox/monu3.vox"));
     shape->GenTexture();
 
     // Create gBuffer and texture to render to it
@@ -86,6 +87,8 @@ void Renderer::Start(GLFWwindow* window)
 
 void Renderer::Render()
 {
+    Profiler::Get()->StartFrame("GPU Frame");
+
     glClearColor(0.0f, 0.0f, 0.0f, 1.00f);
     glViewport(0, 0, 1920, 1080);
 
@@ -94,6 +97,7 @@ void Renderer::Render()
     _ImGuiLayer.EndFrame();
 
     {
+        Profiler::Get()->StartFrame("GPU::GBuffer");
         glBindFramebuffer(GL_FRAMEBUFFER, _GBuffer);
         glClear(GL_COLOR_BUFFER_BIT);
 
@@ -120,9 +124,12 @@ void Renderer::Render()
 
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
         glBindTexture(GL_TEXTURE_3D, 0);
+        glFinish(); // TODO: TAKE THIS OFF, THIS IS FOR ACCURATE GPU PROFILING
+        Profiler::Get()->EndFrame();
     }
 
     {
+        Profiler::Get()->StartFrame("GPU::ScreenBuffer");
         glBindFramebuffer(GL_FRAMEBUFFER, _ScreenBuffer);
         glClear(GL_COLOR_BUFFER_BIT);
 
@@ -153,7 +160,11 @@ void Renderer::Render()
 
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
         glBindTexture(GL_TEXTURE_2D, 0);
+        glFinish(); // TODO: TAKE THIS OFF, THIS IS FOR ACCURATE GPU PROFILING
+        Profiler::Get()->EndFrame();
     }
+
+    Profiler::Get()->EndFrame();
 }
 
 void Renderer::Stop()

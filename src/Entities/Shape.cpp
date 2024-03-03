@@ -1,5 +1,6 @@
 #include "Shape.hpp"
 #include "Logger.hpp"
+#include "Profiler.hpp"
 #include <FastNoise/FastNoise.h>
 
 Shape::Shape()
@@ -12,7 +13,7 @@ Shape::~Shape()
 
 void Shape::Build()
 {
-	auto start = std::chrono::high_resolution_clock::now();
+	Profiler::Get()->StartFrame("Shape::Build");
 
 	float *noiseVolume = new float[_Size.x * _Size.y * _Size.z];
 	auto fnPerlin = FastNoise::New<FastNoise::Perlin>();
@@ -22,7 +23,7 @@ void Shape::Build()
 	{
 		if (noiseVolume[i] > 0.0)
 		{
-			_Data[i] = (rand() % 10 + 1); // TODO: +3 because two level of mimap, if data == 1 instead of 4 we lose the 1 in the 2nd level
+			_Data[i] = (rand() % 10 + 1);
 		}
 		else
 		{
@@ -39,8 +40,8 @@ void Shape::Build()
 	Logger::Get()->Log(Logger::INFO, "\tMemory size (MB): %d MB", _Data.size() / 1024 / 1024);
 	Logger::Get()->Log(Logger::INFO, "-----------------");
 
-    auto finish = std::chrono::high_resolution_clock::now();
-    Logger::Get()->Log(Logger::LogType::INFO, "Time to build Shape with noise: %.3f ms", std::chrono::duration_cast<std::chrono::duration<double, std::milli>>(finish - start).count());
+	Profiler::Get()->EndFrame();
+    Logger::Get()->Log(Logger::LogType::INFO, "Time to build Shape with noise: %.3f ms", Profiler::Get()->GetFrameTime("Shape::Build"));
 }
 
 void Shape::GenTexture()

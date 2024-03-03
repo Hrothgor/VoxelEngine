@@ -6,7 +6,9 @@
 #include <string>
 #include <iostream>
 #include <algorithm>
+#include <numeric>
 #include <vector>
 #include <map>
+#include <stack>
 #include <chrono>
 #include <functional>

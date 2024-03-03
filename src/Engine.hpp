@@ -44,12 +44,12 @@ private:
 
 // TIME
     public:
-        float GetDeltaTime() const { return _deltaTime; }
-        int GetFPS() const { return _fps; }
+        float GetDeltaTime();
+        int GetFPS();
     private:
-        float _deltaTime;
-        float _lastFrame;
-        float _fps = 60.0f;
+        void UpdateAverageFPS();
+        std::vector<float> _fpsTimes;
+        float _averageFPS;
 
 // SINGLETON
     protected:

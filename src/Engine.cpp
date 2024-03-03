@@ -1,6 +1,7 @@
 #include "Engine.hpp"
 
 #include "Logger.hpp"
+#include "Profiler.hpp"
 #include "InputManager.hpp"
 #include "Entities/Camera.hpp"
 #include "Renderer/Renderer.hpp"
@@ -15,7 +16,6 @@ Engine::Engine() {
     _VSync = false;
 
     _MainCamera = std::make_shared<Camera>();
-    _lastFrame = glfwGetTime();
 }
 
 Engine::~Engine() {
@@ -67,18 +67,19 @@ void Engine::Update() {
     // -----------
     while (!glfwWindowShouldClose(_Window))
     {
-        // input
-        // -----
-        InputManager::Get()->ProcessInput(_Window);
+        Profiler::Get()->StartFrame("Engine");
+        Profiler::Get()->StartFrame("CPU Frame");
+        {
+            // input
+            // -----
+            InputManager::Get()->ProcessInput(_Window);
 
-        // Update
-        // ------
-        float currentFrame = glfwGetTime();
-        _deltaTime = currentFrame - _lastFrame;
-        _lastFrame = currentFrame;
-        _fps += (1.0f / std::max<float>(_deltaTime, 0.00001) - _fps) * 0.03f;
-
-        _MainCamera->Update(_Window);
+            // Update
+            // ------
+            UpdateAverageFPS();
+            _MainCamera->Update(_Window);
+        }
+        Profiler::Get()->EndFrame();
 
         // render
         // ------
@@ -88,10 +89,27 @@ void Engine::Update() {
         // -------------------------------------------------------------------------------
         glfwSwapBuffers(_Window);
         glfwPollEvents();
+        Profiler::Get()->EndFrame();
     }
 }
 
 void Engine::Stop() {
     Renderer::Get()->Stop();
     glfwTerminate();
+}
+
+float Engine::GetDeltaTime() {
+    return Profiler::Get()->GetFrameTime("Engine");
+}
+
+int Engine::GetFPS() {
+    return _averageFPS;
+}
+
+void Engine::UpdateAverageFPS() {
+    _fpsTimes.push_back(1 / GetDeltaTime());
+    if (_fpsTimes.size() > 60)
+        _fpsTimes.erase(_fpsTimes.begin());
+
+    _averageFPS = std::accumulate(_fpsTimes.begin(), _fpsTimes.end(), 0.0) / _fpsTimes.size();
 }
